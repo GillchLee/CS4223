@@ -8,7 +8,7 @@
 #include <list>
 #include <mutex>
 #include <thread>
-
+#include <sstream>
 
 //#define protocol 0 1 (MESI or DRAGON)
 
@@ -18,26 +18,37 @@
 #define FILE_NAME "blackscholes_"
 #define DRAMsize 0xFFFFFFFF // 4GB DRAM
 
-bool readLineFromFile(std::ifstream& file, std::string& line) {
-    if (std::getline(file, line)) {
-        return true;  // read success
+
+// Function to read one line from the file and return label and data (as integer)
+std::pair<int, unsigned int> readLabelAndData(const std::string& line) {
+    std::istringstream iss(line);
+    int label;
+    unsigned int data;
+
+    // Parse label and hex data from the line
+    if (iss >> label >> std::hex >> data) {
+        return {label, data};  // Return label and data as a pair
     }
-    return false;  //  EOF or error
+
+    // If parsing fails, return default error values
+    return {-1, 0};
 }
+
+
 
 std::string generateFileName(int index) {
     return "data/" + std::string(FILE_NAME) + std::to_string(index) + ".data";
 }
 
-class DRAM {
+class DRAM {    
 private:
-    uint32_t* memory;   //memory 4bytes 
+    uint8_t* memory;   //memory 1bytes 
     size_t size;        //size of dram (# of words)
-    // std::mutex mem_mutex;
+    std::mutex mem_mutex;
 
 public:
-    DRAM(size_t sizeInWords) : size(sizeInWords){
-        memory = new (std::nothrow) uint32_t[size];
+    DRAM(size_t sizeInBytes) : size(sizeInBytes){
+        memory = new (std::nothrow) uint8_t[size];
         if(!memory){
             throw std::bad_alloc(); //
         }
@@ -48,14 +59,14 @@ public:
         delete[] memory;
     }
     
-    void write(size_t address, uint32_t value){ // write to memory
+    void write(size_t address, uint8_t value){ // write to memory
         if (address >= size){
             throw std::out_of_range("out of range of address");
         }
     memory[address] = value;
     }
 
-    uint32_t read(size_t address) const{    //read from memory
+    uint8_t read(size_t address) const{    //read from memory
         if(address>= size){
             throw std::out_of_range("out of range of address");
         }
@@ -85,6 +96,7 @@ private:
     int numSets;        // Total number of sets
     std::vector<std::list<CacheLine>> sets;  // List of sets, each containing cache lines
 
+
 public:
     // Constructor
     Cache(int cacheSize, int blockSize, int associativity)
@@ -96,7 +108,8 @@ public:
         // Initialize each set with an empty list of cache lines
         sets.resize(numSets);
     }
-
+    bool set_hit_or_not =0 ;
+    bool hit = 0 ;
     // Access method (returns true if hit, false if miss)
     bool access(int address) {
         int blockIndex = (address / blockSize) % numSets;  // Calculate set index
@@ -151,19 +164,122 @@ private:
     Bus* bus;          // Shared bus
     DRAM* dram;        // Shared DRAM
     int cycles;        // Cycle counter
+    bool on_process;    // if CPU is working or not
 
+    int label;
+    unsigned int data;
+    int target_cycles;
+
+
+
+    // benchmark factors
+    unsigned long total_cycles;  // idle cycles + target cycles
+    unsigned int num_ls;        // # of load/store
+    unsigned long compute_cycles; // # of total compute cycles
 public:
-    CPU(int id, Cache* cache, Bus* bus, DRAM* dram) 
-        : id(id), cache(cache), bus(bus), dram(dram), cycles(0) {}
+    CPU(int id, Cache* cache, Bus* bus, DRAM* dram, int cycles, bool on_process, int label, unsigned int data, int target_cycles,unsigned long total_cycles, unsigned int num_ls,unsigned long compute_cycles) 
+        : id(id), cache(cache), bus(bus), dram(dram), cycles(0), on_process(0),label(-1), data(0), target_cycles(100), total_cycles(0), num_ls(0), compute_cycles(0){}
 
+    // Function to read operations from a file
+    bool Execute( const int input_label, const unsigned int input_data);
+
+    // New function to print the benchmark factors
+    void PrintStats() const {
+        std::cout << "Total Cycles: " << total_cycles << std::endl;
+        std::cout << "Number of Load/Store Operations: " << num_ls << std::endl;
+        std::cout << "Compute Cycles: " << compute_cycles << std::endl;
+    }
 };
+
+bool CPU::Execute( const int input_label, const unsigned int input_data){ // access cache, dram. and compute 
+    
+    if(!on_process){                // if there's no instruction in CPU, insert label and data to CPU
+        label = input_label;
+        if(label == 0 || label == 1)  num_ls++;  // for counting # of load/store 
+        data  = input_data;
+        target_cycles = data;
+        on_process = true;
+    }
+
+    if(label == 2){ // start computing and hold cycles for "data time". if input_data is 0xc, wait for 12 cycles to compute.
+        if( target_cycles == cycles){
+            on_process = false;
+            compute_cycles += cycles;
+            cycles = 0;
+        }
+        else{
+            cycles++;
+        }     
+    }
+    else if(label == 0 || label==1){ //cache access
+        
+        if( !cache->set_hit_or_not){        // Check if we already accesse to the cache or not
+            cache->hit = cache->access(data);
+            cache->set_hit_or_not = true;
+        }
+        
+        if( cache->hit){ // cache hit
+            if(cycles == 1){
+                on_process = false;
+                total_cycles += cycles;
+                cycles = 0;
+                cache->set_hit_or_not = false;
+            }
+            else{
+                cycles ++;
+            }
+        }
+        else{                               //cache miss -> dram access.
+            if(cycles == 100){
+                on_process = false;
+                total_cycles += cycles;
+                cycles = 0;
+                cache ->set_hit_or_not = false;
+            }       
+            else{
+                cycles++;
+            }
+        }
+        
+        
+    }
+    return on_process;
+}
+
+void ThreadExecuteCPU( CPU* CPU, std::ifstream& file){
+
+std::string line;
+int label;
+unsigned int input_data;
+std::pair<int, unsigned int> result;
+
+while ( std::getline(file,line) ) {
+        result = readLabelAndData(line);
+        label = result.first;
+        input_data = result.second;
+        while(1){
+            if(!CPU->Execute(label,input_data))
+                break;
+        }
+    }
+}
+
+
 
 
 int main()
 {
 
-// -----------------------READ FILE EXAMPLE -----------------------------
-// -----------------------READ FILE EXAMPLE -----------------------------
+    // while ( std::getline(files[0],line) ) {
+
+    //     result = readLabelAndData(line);
+    //     label = result.first;
+    //     input_data = result.second;
+    //     while(1){
+    //         if(!cpu1.Execute(label,input_data))
+    //             break;
+    //     }    
+    // }
 
     std::vector<std::string> filenames;
     std::vector<std::ifstream> files;
@@ -188,45 +304,60 @@ int main()
 
 
     bool anyFileHasData = true;
-    long count_mem_access[4] = {0};
-    while(anyFileHasData)                                               // read data untill no data to read
-    {
-        anyFileHasData = false;
     std::string line;
-    for (size_t i = 0; i < files.size(); ++i) {
-        if (std::getline(files[i], line)){                              // read line
-            //std::cout << "Files " << i << ": " << line << std::endl;  // print line
-            count_mem_access[i]++;
-            anyFileHasData = true;
-        } else {
-            std::cout << "Files" << i << "can not read" << std::endl;
-        }
-
-        }
-    }
-        for ( int i = 0 ; i < 4 ; i ++)
-        {
-            std::cout << " mem access " << i << " : " << std::dec << count_mem_access[i] << std::endl;
-        }
-        for( auto& file : files) {
-            file.close();
-        }
-        return 0;
-    // --------------------------READ File example ends------------------------- //
-    // --------------------------READ File example ends------------------------- //
-
+    int label;
+    unsigned int input_data;
+    std::pair<int, unsigned int> result;
+    int count = 3;
+    
+    
     Bus bus;
     DRAM dram(DRAMsize);
-
     Cache cache1(CACHE_SIZE, CACHE_BLOCK_SIZE, CACHE_ASSOC); // Cache size, block size, n-way associative
     Cache cache2(CACHE_SIZE, CACHE_BLOCK_SIZE, CACHE_ASSOC);
     Cache cache3(CACHE_SIZE, CACHE_BLOCK_SIZE, CACHE_ASSOC);
     Cache cache4(CACHE_SIZE, CACHE_BLOCK_SIZE, CACHE_ASSOC);
 
-    CPU cpu1(1, &cache1, &bus, &dram);
-    CPU cpu2(2, &cache2, &bus, &dram);
-    CPU cpu3(3, &cache3, &bus, &dram);
-    CPU cpu4(4, &cache4, &bus, &dram);
+    
+    CPU cpu1(1, &cache1, &bus, &dram, 
+             0, false, -1, 0, 100, 
+             0, 0, 0);
+    CPU cpu2(2, &cache2, &bus, &dram, 
+             0, false, -1, 0, 100, 
+             0, 0, 0);    
+    CPU cpu3(3, &cache3, &bus, &dram, 
+             0, false, -1, 0, 100, 
+             0, 0, 0);
+    CPU cpu4(1, &cache4, &bus, &dram, 
+             0, false, -1, 0, 100, 
+             0, 0, 0);
+
+
+    // Launch threads for each CPU
+    std::thread t1(ThreadExecuteCPU, &cpu1, std::ref(files[0]));
+//   std::thread t2(ThreadExecuteCPU, &cpu2, std::ref(files[1]));
+//    std::thread t3(ThreadExecuteCPU, &cpu3, std::ref(files[2]));
+//    std::thread t4(ThreadExecuteCPU, &cpu4, std::ref(files[3]));
+
+    // Wait for all threads to complete
+    t1.join();
+//    t2.join();
+//    t3.join();
+//    t4.join();
+
+
+
+    for( auto& file : files) {
+            file.close();
+    }
+
+    cpu1.PrintStats();
+
+
+    return 0;
+
+    // Bus bus;
+    // DRAM dram(DRAMsize);
 
 
 }
