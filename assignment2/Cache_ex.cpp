@@ -36,6 +36,7 @@ std::pair<int, unsigned int> readLabelAndData(const std::string& line) {
 
 
 
+
 std::string generateFileName(int index) {
     return "data/" + std::string(FILE_NAME) + std::to_string(index) + ".data";
 }
@@ -173,75 +174,90 @@ private:
 
 
     // benchmark factors
+    unsigned int total_instructions; // for computing IPC
     unsigned long total_cycles;  // idle cycles + target cycles
     unsigned int num_ls;        // # of load/store
     unsigned long compute_cycles; // # of total compute cycles
+    unsigned long cache_hit;
+    unsigned long cache_miss;
 public:
-    CPU(int id, Cache* cache, Bus* bus, DRAM* dram, int cycles, bool on_process, int label, unsigned int data, int target_cycles,unsigned long total_cycles, unsigned int num_ls,unsigned long compute_cycles) 
-        : id(id), cache(cache), bus(bus), dram(dram), cycles(0), on_process(0),label(-1), data(0), target_cycles(100), total_cycles(0), num_ls(0), compute_cycles(0){}
+    CPU(int id, Cache* cache, Bus* bus, DRAM* dram, int cycles, bool on_process, int label, unsigned int data, 
+    int target_cycles,
+    unsigned int total_instructions, long total_cycles, unsigned int num_ls,unsigned long compute_cycles, unsigned long cache_hit, unsigned long cache_miss) 
+        : id(id), cache(cache), bus(bus), dram(dram), cycles(0), on_process(0),label(-1), data(0),
+        target_cycles(100),
+        total_instructions(0), total_cycles(0), num_ls(0), compute_cycles(0), cache_hit(0),cache_miss(0) {}
 
     // Function to read operations from a file
     bool Execute( const int input_label, const unsigned int input_data);
 
     // New function to print the benchmark factors
     void PrintStats() const {
-        std::cout << "Total Cycles: " << total_cycles << std::endl;
+        double IPC = static_cast<double>(total_instructions) / static_cast<double>(total_cycles+compute_cycles);
+        std::cout << "Total Cycles: " << total_cycles+compute_cycles << std::endl;
+        std::cout << "Total instructions:" << total_instructions << std::endl;
+        std::cout << "IPC : " << IPC << std::endl;
         std::cout << "Number of Load/Store Operations: " << num_ls << std::endl;
         std::cout << "Compute Cycles: " << compute_cycles << std::endl;
+        std::cout << "Cache hit : " << cache_hit << std::endl;
+        std::cout << "Cache miss : " << cache_miss << std::endl;
     }
 };
 
 bool CPU::Execute( const int input_label, const unsigned int input_data){ // access cache, dram. and compute 
     
+
     if(!on_process){                // if there's no instruction in CPU, insert label and data to CPU
+
         label = input_label;
-        if(label == 0 || label == 1)  num_ls++;  // for counting # of load/store 
         data  = input_data;
         target_cycles = data;
+
+        if(label == 0 || label == 1)  num_ls++;  // for counting # of load/store 
+        total_instructions++;
         on_process = true;
     }
-
-    if(label == 2){ // start computing and hold cycles for "data time". if input_data is 0xc, wait for 12 cycles to compute.
-        if( target_cycles == cycles){
-            on_process = false;
-            compute_cycles += cycles;
-            cycles = 0;
-        }
-        else{
-            cycles++;
-        }     
-    }
-    else if(label == 0 || label==1){ //cache access
-        
-        if( !cache->set_hit_or_not){        // Check if we already accesse to the cache or not
-            cache->hit = cache->access(data);
-            cache->set_hit_or_not = true;
-        }
-        
-        if( cache->hit){ // cache hit
-            if(cycles == 1){
+    else{
+        if(label == 2){ // start computing and hold cycles for "data time". if input_data is 0xc, wait for 12 cycles to compute.
+            if( target_cycles == cycles){
                 on_process = false;
-                total_cycles += cycles;
+                compute_cycles += cycles;
                 cycles = 0;
-                cache->set_hit_or_not = false;
             }
-            else{
-                cycles ++;
-            }
-        }
-        else{                               //cache miss -> dram access.
-            if(cycles == 100){
-                on_process = false;
-                total_cycles += cycles;
-                cycles = 0;
-                cache ->set_hit_or_not = false;
-            }       
             else{
                 cycles++;
-            }
+            }     
         }
-        
-        
+        else if(label == 0 || label==1){ //cache access
+            if( !cache->set_hit_or_not){        // Check if we already accesse to the cache or not
+                cache->hit = cache->access(data);
+                if(cache->hit) cache_hit++;
+                else cache_miss++;
+                cache->set_hit_or_not = true;
+            }
+            if(cache->hit){ // cache hit
+                if(cycles == 1){
+                    on_process = false;
+                    total_cycles += cycles;
+                    cycles = 0;
+                    cache->set_hit_or_not = false;
+                }
+                else{
+                    cycles ++;
+                }
+            }
+            else{                               //cache miss -> dram access.
+                if(cycles == 100){
+                    on_process = false;
+                    total_cycles += cycles;
+                    cycles = 0;
+                    cache ->set_hit_or_not = false;
+                }       
+                else{
+                    cycles++;
+                }
+            }
+        }        
     }
     return on_process;
 }
@@ -270,16 +286,6 @@ while ( std::getline(file,line) ) {
 int main()
 {
 
-    // while ( std::getline(files[0],line) ) {
-
-    //     result = readLabelAndData(line);
-    //     label = result.first;
-    //     input_data = result.second;
-    //     while(1){
-    //         if(!cpu1.Execute(label,input_data))
-    //             break;
-    //     }    
-    // }
 
     std::vector<std::string> filenames;
     std::vector<std::ifstream> files;
@@ -308,8 +314,7 @@ int main()
     int label;
     unsigned int input_data;
     std::pair<int, unsigned int> result;
-    int count = 3;
-    
+
     
     Bus bus;
     DRAM dram(DRAMsize);
@@ -319,32 +324,71 @@ int main()
     Cache cache4(CACHE_SIZE, CACHE_BLOCK_SIZE, CACHE_ASSOC);
 
     
-    CPU cpu1(1, &cache1, &bus, &dram, 
-             0, false, -1, 0, 100, 
-             0, 0, 0);
-    CPU cpu2(2, &cache2, &bus, &dram, 
-             0, false, -1, 0, 100, 
-             0, 0, 0);    
-    CPU cpu3(3, &cache3, &bus, &dram, 
-             0, false, -1, 0, 100, 
-             0, 0, 0);
-    CPU cpu4(1, &cache4, &bus, &dram, 
-             0, false, -1, 0, 100, 
-             0, 0, 0);
+    CPU cpu1(1, &cache1, &bus, &dram, 0, false, -1, 0,
+            100, 
+            0, 0, 0, 0, 0, 0);
+    CPU cpu2(2, &cache2, &bus, &dram, 0, false, -1, 0,
+            100, 
+            0, 0, 0, 0, 0 ,0);    
+    CPU cpu3(3, &cache3, &bus, &dram, 0, false, -1, 0,
+            100, 
+            0, 0, 0, 0, 0, 0);
+    CPU cpu4(4, &cache4, &bus, &dram, 0, false, -1, 0, 
+             100,
+            0, 0, 0, 0, 0, 0);
 
 
     // Launch threads for each CPU
-    std::thread t1(ThreadExecuteCPU, &cpu1, std::ref(files[0]));
+//    std::thread t1(ThreadExecuteCPU, &cpu1, std::ref(files[0]));
 //   std::thread t2(ThreadExecuteCPU, &cpu2, std::ref(files[1]));
 //    std::thread t3(ThreadExecuteCPU, &cpu3, std::ref(files[2]));
 //    std::thread t4(ThreadExecuteCPU, &cpu4, std::ref(files[3]));
+//    ThreadExecuteCPU(&cpu2,files[1]);
 
     // Wait for all threads to complete
-    t1.join();
+//   t1.join();
 //    t2.join();
 //    t3.join();
 //    t4.join();
 
+
+
+// for multicore cycles
+
+// unsigned long long total_cycles = 0;    
+// bool Readfile_available = true;
+
+// while(Readfile_available){
+//     Readfile_available = false;
+    
+//     if(std::getline(files[0], line)){
+//         result=readLabelAndData(line);
+//         cpu1.Execute(result.first, result.second);
+//         Readfile_available = true;
+//     }
+//     if(std::getline(files[1],line)){
+//         result=readLabelAndData(line);
+//         cpu2.Execute(result.first, result.second);
+//         Readfile_available = true;
+//     }
+//     if(std::getline(files[2], line)){
+//         result=readLabelAndData(line);
+//         cpu3.Execute(result.first, result.second);
+//         Readfile_available = true;
+//     }
+//     if(std::getline(files[3],line)){
+//         result=readLabelAndData(line);
+//         cpu4.Execute(result.first, result.second);
+//         Readfile_available = true;
+//     }
+//     total_cycles++;
+// }
+
+///////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////
+
+
+ThreadExecuteCPU(&cpu1,files[0]); // Execute single CPU
 
 
     for( auto& file : files) {
@@ -353,6 +397,7 @@ int main()
 
     cpu1.PrintStats();
 
+//    cpu2.PrintStats();
 
     return 0;
 
