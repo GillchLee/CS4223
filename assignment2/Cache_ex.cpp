@@ -37,7 +37,7 @@ std::pair<int, unsigned int> readLabelAndData(const std::string& line) {
 
 
 
-std::string generateFileName(int index) {
+std::string generateFileName(const int index) {
     return "data/" + std::string(FILE_NAME) + std::to_string(index) + ".data";
 }
 
@@ -48,7 +48,7 @@ private:
     std::mutex mem_mutex;
 
 public:
-    DRAM(size_t sizeInBytes) : size(sizeInBytes){
+    explicit DRAM(const size_t sizeInBytes) : size(sizeInBytes){
         memory = new (std::nothrow) uint8_t[size];
         if(!memory){
             throw std::bad_alloc(); //
@@ -109,8 +109,8 @@ public:
         // Initialize each set with an empty list of cache lines
         sets.resize(numSets);
     }
-    bool set_hit_or_not =0 ;
-    bool hit = 0 ;
+    bool set_hit_or_not =false ;
+    bool hit = false ;
     // Access method (returns true if hit, false if miss)
     bool access(int address) {
         int blockIndex = (address / blockSize) % numSets;  // Calculate set index
@@ -128,6 +128,9 @@ public:
             }
         }
 
+        //TODO: on eviction, do a writeback(drive bus and send to memory). Only needs to block until done driving bus
+        // Unsure if the CPU needs to block or not on a writeback, or if it just needs to take up the bus
+
         // Handle a cache miss
         if (set.size() >= associativity) {
             // If the set is full, remove the least recently used (LRU) cache line
@@ -144,20 +147,28 @@ public:
     }
 };
 
+//TODO: Implement bus state that it broadcasts to the entire system. Also implement a queue for who drives the bus.
 class Bus {
 private:
-    std::mutex busLock; // Ensures mutual exclusion on the bus
+    bool isOccupied = false;
 
 public:
-    void requestBus() {
-        busLock.lock(); // Acquire the bus
+    bool requestBus() {
+        if (isOccupied) {
+            //TODO: Add the CPU to the bus queue
+            return false;
+        }
+        isOccupied = true;
+        return true;
     }
-
     void releaseBus() {
-        busLock.unlock(); // Release the bus
+        //TODO: change it so that it will pop the next task from the queue if there is one, if not sets isOccupied to false
+        isOccupied = false;
     }
 };
 
+
+//TODO: add a drive bus method that will switch the state of the CPU from idle to driving bus
 class CPU {
 private:
     int id;           // CPU ID
@@ -184,12 +195,12 @@ public:
     CPU(int id, Cache* cache, Bus* bus, DRAM* dram, int cycles, bool on_process, int label, unsigned int data, 
     int target_cycles,
     unsigned int total_instructions, long total_cycles, unsigned int num_ls,unsigned long compute_cycles, unsigned long cache_hit, unsigned long cache_miss) 
-        : id(id), cache(cache), bus(bus), dram(dram), cycles(0), on_process(0),label(-1), data(0),
+        : id(id), cache(cache), bus(bus), dram(dram), cycles(0), on_process(false),label(-1), data(0),
         target_cycles(100),
         total_instructions(0), total_cycles(0), num_ls(0), compute_cycles(0), cache_hit(0),cache_miss(0) {}
 
     // Function to read operations from a file
-    bool Execute( const int input_label, const unsigned int input_data);
+    bool Execute( int input_label, unsigned int input_data);
 
     // New function to print the benchmark factors
     void PrintStats() const {
@@ -204,9 +215,7 @@ public:
     }
 };
 
-bool CPU::Execute( const int input_label, const unsigned int input_data){ // access cache, dram. and compute 
-    
-
+bool CPU::Execute( const int input_label, const unsigned int input_data){ // access cache, dram. and compute
     if(!on_process){                // if there's no instruction in CPU, insert label and data to CPU
 
         label = input_label;
@@ -229,7 +238,8 @@ bool CPU::Execute( const int input_label, const unsigned int input_data){ // acc
             }     
         }
         else if(label == 0 || label==1){ //cache access
-            if( !cache->set_hit_or_not){        // Check if we already accesse to the cache or not
+            if( !cache->set_hit_or_not){        // Check if we already accessed to the cache or not
+                //TODO: Make it so that when there is cache eviction, this will stall until done driving the bus with the writeback.
                 cache->hit = cache->access(data);
                 if(cache->hit) cache_hit++;
                 else cache_miss++;
@@ -247,7 +257,9 @@ bool CPU::Execute( const int input_label, const unsigned int input_data){ // acc
                 }
             }
             else{                               //cache miss -> dram access.
-                if(cycles == 100){
+                //TODO: change this so that it just attempts to drive the bus and send a read request.
+                // the DRAM will then wait the 100 cycles then send back the data
+                if(cycles == 117){
                     on_process = false;
                     total_cycles += cycles;
                     cycles = 0;
@@ -262,31 +274,8 @@ bool CPU::Execute( const int input_label, const unsigned int input_data){ // acc
     return on_process;
 }
 
-void ThreadExecuteCPU( CPU* CPU, std::ifstream& file){
-
-std::string line;
-int label;
-unsigned int input_data;
-std::pair<int, unsigned int> result;
-
-while ( std::getline(file,line) ) {
-        result = readLabelAndData(line);
-        label = result.first;
-        input_data = result.second;
-        while(1){
-            if(!CPU->Execute(label,input_data))
-                break;
-        }
-    }
-}
-
-
-
-
 int main()
 {
-
-
     std::vector<std::string> filenames;
     std::vector<std::ifstream> files;
 
@@ -309,10 +298,7 @@ int main()
     std::cout << "open files succeed" << std::endl;
 
 
-    bool anyFileHasData = true;
     std::string line;
-    int label;
-    unsigned int input_data;
     std::pair<int, unsigned int> result;
 
     
@@ -338,34 +324,21 @@ int main()
             0, 0, 0, 0, 0, 0);
 
 
-    // Launch threads for each CPU
-//    std::thread t1(ThreadExecuteCPU, &cpu1, std::ref(files[0]));
-//   std::thread t2(ThreadExecuteCPU, &cpu2, std::ref(files[1]));
-//    std::thread t3(ThreadExecuteCPU, &cpu3, std::ref(files[2]));
-//    std::thread t4(ThreadExecuteCPU, &cpu4, std::ref(files[3]));
-//    ThreadExecuteCPU(&cpu2,files[1]);
-
-    // Wait for all threads to complete
-//   t1.join();
-//    t2.join();
-//    t3.join();
-//    t4.join();
-
-
-
 // for multicore cycles
 
-// unsigned long long total_cycles = 0;    
-// bool Readfile_available = true;
+unsigned long long total_cycles = -1;
+bool Readfile_available = true;
 
-// while(Readfile_available){
-//     Readfile_available = false;
-    
-//     if(std::getline(files[0], line)){
-//         result=readLabelAndData(line);
-//         cpu1.Execute(result.first, result.second);
-//         Readfile_available = true;
-//     }
+while(Readfile_available) {
+    Readfile_available = false;
+
+    if(std::getline(files[0], line)){
+        result=readLabelAndData(line);
+        cpu1.Execute(result.first, result.second);
+        Readfile_available = true;
+    }
+    total_cycles++;
+}
 //     if(std::getline(files[1],line)){
 //         result=readLabelAndData(line);
 //         cpu2.Execute(result.first, result.second);
@@ -384,26 +357,8 @@ int main()
 //     total_cycles++;
 // }
 
-///////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////
-
-
-ThreadExecuteCPU(&cpu1,files[0]); // Execute single CPU
-
-
-    for( auto& file : files) {
-            file.close();
-    }
-
     cpu1.PrintStats();
 
-//    cpu2.PrintStats();
-
     return 0;
-
-    // Bus bus;
-    // DRAM dram(DRAMsize);
-
-
 }
 
