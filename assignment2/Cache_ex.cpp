@@ -153,18 +153,21 @@ private:
     bool isOccupied = false;
 
 public:
-    bool requestBus() {
-        if (isOccupied) {
-            //TODO: Add the CPU to the bus queue
-            return false;
-        }
-        isOccupied = true;
-        return true;
-    }
-    void releaseBus() {
-        //TODO: change it so that it will pop the next task from the queue if there is one, if not sets isOccupied to false
-        isOccupied = false;
-    }
+    void putOnBus(int address, )
+};
+
+class BusTransaction {
+    private:
+        transactionTypes transactionType;
+        int address = 0;
+        bool isFinalPacket = false;
+        Object owner;
+};
+
+enum transactionTypes {
+    READ_REQUEST,
+    WRITE_BACK,
+    READ_RESPONSE
 };
 
 
@@ -199,6 +202,8 @@ public:
         target_cycles(100),
         total_instructions(0), total_cycles(0), num_ls(0), compute_cycles(0), cache_hit(0),cache_miss(0) {}
 
+    bool isDataReceived(unsigned int data);
+
     // Function to read operations from a file
     bool Execute( int input_label, unsigned int input_data);
 
@@ -213,6 +218,8 @@ public:
         std::cout << "Cache hit : " << cache_hit << std::endl;
         std::cout << "Cache miss : " << cache_miss << std::endl;
     }
+
+    bool
 };
 
 bool CPU::Execute( const int input_label, const unsigned int input_data){ // access cache, dram. and compute
@@ -256,15 +263,27 @@ bool CPU::Execute( const int input_label, const unsigned int input_data){ // acc
                     cycles ++;
                 }
             }
-            else{                               //cache miss -> dram access.
+            else {
+                //cache miss -> dram access.
                 //TODO: change this so that it just attempts to drive the bus and send a read request.
                 // the DRAM will then wait the 100 cycles then send back the data
-                if(cycles == 117){
+
+                const int DRAM_PENALTY = 100;
+                const int CACHE_HIT_PENALTY = 1;
+                const int WORD_SIZE = 4;
+                const int BANDWIDTH_PENALTY = 2 * (CACHE_BLOCK_SIZE / WORD_SIZE);
+                if(cycles == (DRAM_PENALTY + CACHE_HIT_PENALTY + BANDWIDTH_PENALTY)){
                     on_process = false;
                     total_cycles += cycles;
                     cycles = 0;
                     cache ->set_hit_or_not = false;
-                }       
+                }
+                // if (isDataReceived(data)) {
+                //     on_process = false;
+                //     total_cycles += cycles;
+                //     cycles = 0;
+                //     cache ->set_hit_or_not = false;
+                }
                 else{
                     cycles++;
                 }
@@ -287,11 +306,11 @@ int main()
     
         //Open files
         std::ifstream file(filename);
-        if (!file.is_open())
-        {   
-            std::cerr << "can't open file" << filename << std::endl;
-            return 1; // stop program
-        }
+        // if (!file.is_open())
+        // {
+        //     std::cerr << "can't open file" << filename << std::endl;
+        //     return 1; // stop program
+        // }
         files.push_back(std::move(file));
     }
 
