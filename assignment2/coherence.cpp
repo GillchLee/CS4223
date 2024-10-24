@@ -12,12 +12,19 @@
 
 //#define protocol 0 1 (MESI or DRAGON)
 
-#define CACHE_SIZE 4096 //1024
-#define CACHE_ASSOC 2
-#define CACHE_BLOCK_SIZE 16
-#define FILE_NAME "blackscholes_"
+// #define CACHE_SIZE 4096 //1024
+// #define CACHE_ASSOC 2
+// #define CACHE_BLOCK_SIZE 32
+// #define FILE_NAME "blackscholes_"
 #define DRAMsize 0xFFFFFFFF // 4GB DRAM
 
+int CACHE_SIZE = 4096;
+int CACHE_ASSOC = 2;
+int CACHE_BLOCK_SIZE = 32;
+std::string FILE_NAME = "blackscholes_";
+std::string PROTOCOL = "NONE";
+
+unsigned int busTraffic = 0;
 
 // Function to read one line from the file and return label and data (as integer)
 std::pair<int, unsigned int> readLabelAndData(const std::string& line) {
@@ -130,11 +137,13 @@ public:
 
         //TODO: on eviction, do a writeback(drive bus and send to memory). Only needs to block until done driving bus
         // Unsure if the CPU needs to block or not on a writeback, or if it just needs to take up the bus
-
         // Handle a cache miss
         if (set.size() >= associativity) {
             // If the set is full, remove the least recently used (LRU) cache line
             set.pop_back();
+            const int WORD_SIZE = 4;
+            const int BANDWIDTH_PENALTY = 2 * (CACHE_BLOCK_SIZE / WORD_SIZE);
+            busTraffic = busTraffic + (BANDWIDTH_PENALTY/2);
         }
 
         // Add a new cache line with the correct tag
@@ -153,22 +162,9 @@ private:
     bool isOccupied = false;
 
 public:
-    void putOnBus(int address, )
+    void putOnBus(int address);
 };
 
-class BusTransaction {
-    private:
-        transactionTypes transactionType;
-        int address = 0;
-        bool isFinalPacket = false;
-        Object owner;
-};
-
-enum transactionTypes {
-    READ_REQUEST,
-    WRITE_BACK,
-    READ_RESPONSE
-};
 
 
 //TODO: add a drive bus method that will switch the state of the CPU from idle to driving bus
@@ -194,6 +190,8 @@ private:
     unsigned long compute_cycles; // # of total compute cycles
     unsigned long cache_hit;
     unsigned long cache_miss;
+    unsigned long idleCycles= 0;
+    unsigned long dataTraffic=0;
 public:
     CPU(int id, Cache* cache, Bus* bus, DRAM* dram, int cycles, bool on_process, int label, unsigned int data, 
     int target_cycles,
@@ -209,17 +207,20 @@ public:
 
     // New function to print the benchmark factors
     void PrintStats() const {
-        double IPC = static_cast<double>(total_instructions) / static_cast<double>(total_cycles+compute_cycles);
-        std::cout << "Total Cycles: " << total_cycles+compute_cycles << std::endl;
+        double IPC = static_cast<double>(total_instructions) / static_cast<double>(total_cycles);
         std::cout << "Total instructions:" << total_instructions << std::endl;
-        std::cout << "IPC : " << IPC << std::endl;
+        // std::cout << "IPC : " << IPC << std::endl;
         std::cout << "Number of Load/Store Operations: " << num_ls << std::endl;
         std::cout << "Compute Cycles: " << compute_cycles << std::endl;
         std::cout << "Cache hit : " << cache_hit << std::endl;
         std::cout << "Cache miss : " << cache_miss << std::endl;
+        std::cout << "Idle cycles : " << idleCycles << std::endl;
+        std::cout << "Amount of data traffic : " << busTraffic << std::endl;
+        std::cout << "Number of invalidations/updates on the bus:0" << std::endl;
+        std::cout << "Distribution of accesses to private data : 100%" << std::endl;
+
     }
 
-    bool
 };
 
 bool CPU::Execute( const int input_label, const unsigned int input_data){ // access cache, dram. and compute
@@ -233,11 +234,12 @@ bool CPU::Execute( const int input_label, const unsigned int input_data){ // acc
         total_instructions++;
         on_process = true;
     }
-    else{
+    // else{
         if(label == 2){ // start computing and hold cycles for "data time". if input_data is 0xc, wait for 12 cycles to compute.
             if( target_cycles == cycles){
-                on_process = false;
+                total_instructions += cycles-1;
                 compute_cycles += cycles;
+                on_process = false;
                 cycles = 0;
             }
             else{
@@ -255,7 +257,8 @@ bool CPU::Execute( const int input_label, const unsigned int input_data){ // acc
             if(cache->hit){ // cache hit
                 if(cycles == 1){
                     on_process = false;
-                    total_cycles += cycles;
+                    // total_cycles += cycles;
+                    idleCycles++;
                     cycles = 0;
                     cache->set_hit_or_not = false;
                 }
@@ -273,28 +276,32 @@ bool CPU::Execute( const int input_label, const unsigned int input_data){ // acc
                 const int WORD_SIZE = 4;
                 const int BANDWIDTH_PENALTY = 2 * (CACHE_BLOCK_SIZE / WORD_SIZE);
                 if(cycles == (DRAM_PENALTY + CACHE_HIT_PENALTY + BANDWIDTH_PENALTY)){
+                    busTraffic += (BANDWIDTH_PENALTY/2);
                     on_process = false;
-                    total_cycles += cycles;
+                    // total_cycles += cycles;
                     cycles = 0;
                     cache ->set_hit_or_not = false;
                 }
-                // if (isDataReceived(data)) {
-                //     on_process = false;
-                //     total_cycles += cycles;
-                //     cycles = 0;
-                //     cache ->set_hit_or_not = false;
-                }
                 else{
+                    idleCycles++;
                     cycles++;
                 }
             }
         }        
-    }
+    // }
     return on_process;
 }
 
-int main()
+int main(int argc, char* argv[])
 {
+    if (argc == 6) {
+        PROTOCOL = argv[1];
+        FILE_NAME = argv[2];
+        CACHE_SIZE = atoi(argv[3]);
+        CACHE_ASSOC = atoi(argv[4]);
+        CACHE_BLOCK_SIZE = atoi(argv[5]);
+    }
+
     std::vector<std::string> filenames;
     std::vector<std::ifstream> files;
 
@@ -305,12 +312,12 @@ int main()
     
     
         //Open files
-        std::ifstream file(filename);
-        // if (!file.is_open())
-        // {
-        //     std::cerr << "can't open file" << filename << std::endl;
-        //     return 1; // stop program
-        // }
+        std::ifstream file("C:/Users/Diana/CLionProjects/untitled/CS4223/assignment2/data/blackscholes_0.data");
+         if (!file.is_open())
+         {
+             std::cerr << "can't open file " << filename << std::endl;
+             return 1; // stop program
+         }
         files.push_back(std::move(file));
     }
 
@@ -353,10 +360,11 @@ while(Readfile_available) {
 
     if(std::getline(files[0], line)){
         result=readLabelAndData(line);
-        cpu1.Execute(result.first, result.second);
+        while (cpu1.Execute(result.first, result.second)) {
+            total_cycles++;
+        }
         Readfile_available = true;
     }
-    total_cycles++;
 }
 //     if(std::getline(files[1],line)){
 //         result=readLabelAndData(line);
@@ -376,6 +384,7 @@ while(Readfile_available) {
 //     total_cycles++;
 // }
 
+    std::cout << "TOTAL CYCLES: " << total_cycles << std::endl;
     cpu1.PrintStats();
 
     return 0;

@@ -1,26 +1,24 @@
-# Compiler
-CXX = g++
+# Makefile
 
-# Compiler flags
+# Compiler and flags
+CXX = g++
 CXXFLAGS = -Wall -g
 
-# Target executable name
-TARGET = Cache_ex
+# Source and target names
+SRC = coherence.cpp
+TARGET = coherence
 
-# Source files
-SRCS = Cache_ex.cpp
+# Default rule to build the executable
+all: $(TARGET)
 
-# Object files (same as source, but .o instead of .cpp)
-OBJS = $(SRCS:.cpp=.o)
+# Compile the source file into an executable
+$(TARGET): $(SRC)
+	$(CXX) $(CXXFLAGS) $(SRC) -o $(TARGET)
 
-# Rule to build the final executable
-$(TARGET): $(OBJS)
-	$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJS)
+# Run the program with 5 command-line arguments
+run: $(TARGET)
+	./$(TARGET) $(arg1) $(arg2) $(arg3) $(arg4) $(arg5)
 
-# Rule to compile the source file into an object file
-%.o: %.cpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@
-
-# Clean rule to remove generated files
+# Clean rule to remove the compiled executable
 clean:
-	rm -f $(OBJS) $(TARGET)
+	rm -f $(TARGET)
