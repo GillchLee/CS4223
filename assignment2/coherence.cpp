@@ -56,34 +56,34 @@ private:
 
 public:
     explicit DRAM(const size_t sizeInBytes) : size(sizeInBytes){
-        memory = new (std::nothrow) uint8_t[size];
-        if(!memory){
-            throw std::bad_alloc(); //
-        }
-        std::fill(memory, memory+size ,0);
+        // memory = new (std::nothrow) uint8_t[size];
+        // // if(!memory){
+        // //     throw std::bad_alloc(); //
+        // // }
+        // std::fill(memory, memory+size ,0);
     }
 
-    ~DRAM() {
-        delete[] memory;
-    }
+    // ~DRAM() {
+    //     delete[] memory;
+    // }
     
-    void write(size_t address, uint8_t value){ // write to memory
-        if (address >= size){
-            throw std::out_of_range("out of range of address");
-        }
-    memory[address] = value;
-    }
+    // void write(size_t address, uint8_t value){ // write to memory
+    //     if (address >= size){
+    //         throw std::out_of_range("out of range of address");
+    //     }
+    // memory[address] = value;
+    // }
 
-    uint8_t read(size_t address) const{    //read from memory
-        if(address>= size){
-            throw std::out_of_range("out of range of address");
-        }
-        return memory[address];
-    }
+    // uint8_t read(size_t address) const{    //read from memory
+    //     if(address>= size){
+    //         throw std::out_of_range("out of range of address");
+    //     }
+    //     return memory[address];
+    // }
 
-    size_t getSize() const{ // return size
-        return size;
-    }
+    // size_t getSize() const{ // return size
+    //     return size;
+    // }
 
 };
 
@@ -312,7 +312,7 @@ int main(int argc, char* argv[])
     
     
         //Open files
-        std::ifstream file("C:/Users/Diana/CLionProjects/untitled/CS4223/assignment2/data/blackscholes_0.data");
+        std::ifstream file(filename);
          if (!file.is_open())
          {
              std::cerr << "can't open file " << filename << std::endl;
