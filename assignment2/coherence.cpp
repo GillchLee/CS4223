@@ -86,7 +86,7 @@ public:
     // }
 
 };
-
+// Just checking going well with school MAC
 class CacheLine {
 public:
     bool valid;
