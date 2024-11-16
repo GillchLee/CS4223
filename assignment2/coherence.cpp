@@ -168,6 +168,7 @@ public:
 
 
 //TODO: add a drive bus method that will switch the state of the CPU from idle to driving bus
+// IDEA : new CPU input, 3 other cache input to check other cache's information by using BUS
 class CPU {
 private:
     int id;           // CPU ID
@@ -181,7 +182,9 @@ private:
     unsigned int data;
     int target_cycles;
 
-
+    Cache* cache_other_1;
+    Cache* cache_other_2;
+    Cache* cache_other_3;
 
     // benchmark factors
     unsigned int total_instructions; // for computing IPC
@@ -195,9 +198,11 @@ private:
 public:
     CPU(int id, Cache* cache, Bus* bus, DRAM* dram, int cycles, bool on_process, int label, unsigned int data, 
     int target_cycles,
+    Cache* cache_other_1,Cache* cache_other_2, Cache* cache_other_3,
     unsigned int total_instructions, long total_cycles, unsigned int num_ls,unsigned long compute_cycles, unsigned long cache_hit, unsigned long cache_miss) 
         : id(id), cache(cache), bus(bus), dram(dram), cycles(0), on_process(false),label(-1), data(0),
         target_cycles(100),
+        cache_other_1(cache_other_1), cache_other_2(cache_other_2), cache_other_3(cache_other_3),
         total_instructions(0), total_cycles(0), num_ls(0), compute_cycles(0), cache_hit(0),cache_miss(0) {}
 
     bool isDataReceived(unsigned int data);
@@ -360,7 +365,7 @@ while(Readfile_available) {
 
     if(std::getline(files[0], line)){
         result=readLabelAndData(line);
-        while (cpu1.Execute(result.first, result.second)) {
+            while (cpu1.Execute(result.first, result.second)) {
             total_cycles++;
         }
         Readfile_available = true;
