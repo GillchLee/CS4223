@@ -30,9 +30,6 @@ bool Cache::access(int address, Bus* bus) {
         }
     }
 
-    //TODO: on eviction, do a writeback(drive bus and send to memory). Only needs to block until done driving bus
-    // Unsure if the CPU needs to block or not on a writeback, or if it just needs to take up the bus
-    // Handle a cache miss
     if (set.size() >= associativity) {
         // If the set is full, remove the least recently used (LRU) cache line
         set.pop_back();
@@ -40,7 +37,7 @@ bool Cache::access(int address, Bus* bus) {
     }
 
     //TODO:FIX THIS
-    bus->putOnBus((BusTransaction::ReadTransaction()));
+    bus->putOnBus(BusTransaction::ReadTransaction(address));
 
     // Add a new cache line with the correct tag
     CacheLine newLine;

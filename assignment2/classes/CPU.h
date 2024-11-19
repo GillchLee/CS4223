@@ -44,6 +44,10 @@ public:
         target_cycles(100),
         total_instructions(0), total_cycles(0), num_ls(0), compute_cycles(0), cache_hit(0),cache_miss(0) {}
 
+    CPU(int cache_block_size, int i, Cache * cache, Bus * bus, DRAM(* dram)(), int i1, bool cond,
+        int i2, int i3, int i4, int i5, int i6, int i7, int i8,
+        int i9, int i10);
+
     bool isDataReceived(unsigned int data);
 
     // Function to read operations from a file
@@ -58,7 +62,7 @@ public:
         std::cout << "Cache hit : " << cache_hit << std::endl;
         std::cout << "Cache miss : " << cache_miss << std::endl;
         std::cout << "Idle cycles : " << idleCycles << std::endl;
-        std::cout << "Amount of data traffic : " << busTraffic << std::endl;
+        // std::cout << "Amount of data traffic : " << busTraffic << std::endl;
         std::cout << "Number of invalidations/updates on the bus:0" << std::endl;
         std::cout << "Distribution of accesses to private data : 100%" << std::endl;
 

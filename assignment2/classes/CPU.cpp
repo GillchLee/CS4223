@@ -46,7 +46,7 @@ bool CPU::Execute( const int input_label, const unsigned int input_data){ // acc
             }
             else {
                 //cache miss -> dram access.
-                if(bus->getTransaction().address == input_data){
+                if(bus->currentTransaction != nullptr && bus->currentTransaction->address == input_data && bus->currentTransaction->type == BusTransaction::ReadResponse){
                     on_process = false;
                     cycles = 0;
                     cache ->set_hit_or_not = false;

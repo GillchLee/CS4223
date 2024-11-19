@@ -4,6 +4,7 @@
 
 #include "Bus.h"
 
+class Bus;
 
 class DRAM {
     bool isBusy = false;
@@ -16,7 +17,7 @@ public:
     void execute(Bus *bus);
     void putOnDRAM(BusTransaction *bt);
 
-    DRAM();
+    DRAM(){}
 };
 
 #endif //DRAM_H

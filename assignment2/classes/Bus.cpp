@@ -7,12 +7,17 @@ void Bus::execute(DRAM *dram) {
             if (currentTransaction->type == BusTransaction::ReadShared || currentTransaction->type == BusTransaction::ReadExclusive) {
                 dram->putOnDRAM(currentTransaction);
             }
-            delete currentTransaction;
-            currentTransaction = queue.front();
-            queue.pop();
+            // delete currentTransaction;
+            if (!queue.empty()) {
+                currentTransaction = queue.front();
+                queue.pop();
+            }
         }else {
             currentTransaction->size--;
         }
+    } else if (!queue.empty()) {
+        currentTransaction = queue.front();
+        queue.pop();
     }
 }
 

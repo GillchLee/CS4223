@@ -25,8 +25,8 @@ public:
         return new BusTransaction(WriteBack, CACHE_BLOCK_SIZE, true);
     }
 
-    static BusTransaction *ReadTransaction() {
-        return new BusTransaction(ReadShared, CACHE_BLOCK_SIZE, true);
+    static BusTransaction *ReadTransaction(int address) {
+        return new BusTransaction(ReadShared, CACHE_BLOCK_SIZE, true, address);
     }
 
     static BusTransaction *ReadResponseTransaction(int address) {

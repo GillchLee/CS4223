@@ -6,6 +6,8 @@
 #include "BusTransaction.h"
 #include "DRAM.h"
 
+class DRAM;
+
 class Bus {
 std::queue<BusTransaction*> queue;
 public:

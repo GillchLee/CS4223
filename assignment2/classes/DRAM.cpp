@@ -1,7 +1,5 @@
 #include "DRAM.h"
 
-DRAM::DRAM() : DRAM(){}
-
 void DRAM::execute(Bus *bus) {
     if (isBusy && cyclesLeft == 0) {
         isBusy = false;

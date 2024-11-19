@@ -12,7 +12,7 @@
 #include "Cache.h"
 #include "DRAM.h"
 
-#define DRAMsize 0xFFFFFFFF // 4GB DRAM
+// #define DRAMsize 0xFFFFFFFF // 4GB DRAM
 
 // Function to read one line from the file and return label and data (as integer)
 std::pair<int, unsigned int> readLabelAndData(const std::string& line) {
@@ -42,6 +42,9 @@ int main(int argc, char* argv[])
         CACHE_ASSOC = atoi(argv[4]);
         CACHE_BLOCK_SIZE = atoi(argv[5]);
     }
+    // else {
+    //     return -6;
+    // }
 
     std::vector<std::string> filenames;
     std::vector<std::ifstream> files;
@@ -53,7 +56,7 @@ int main(int argc, char* argv[])
     
     
         //Open files
-        std::ifstream file("C:/Users/Diana/CLionProjects/untitled/CS4223/assignment2/data/blackscholes_0.data");
+        std::ifstream file("D:/Clion/CS4223AAAA/assignment2/data/blackscholes_0.data");
          if (!file.is_open())
          {
              std::cerr << "can't open file " << filename << std::endl;
@@ -70,7 +73,7 @@ int main(int argc, char* argv[])
 
     
     Bus bus;
-    DRAM dram(DRAMsize);
+    DRAM dram;
     Cache cache1(CACHE_SIZE, CACHE_BLOCK_SIZE, CACHE_ASSOC); // Cache size, block size, n-way associative
     Cache cache2(CACHE_SIZE, CACHE_BLOCK_SIZE, CACHE_ASSOC);
     Cache cache3(CACHE_SIZE, CACHE_BLOCK_SIZE, CACHE_ASSOC);
@@ -98,13 +101,14 @@ bool Readfile_available = true;
 while(Readfile_available) {
     Readfile_available = false;
     total_cycles++;
-
+    bus.execute(&dram);
     if(std::getline(files[0], line)){
         if (!cpu1.Execute(result.first, result.second)) {
             result=readLabelAndData(line);
         }
         Readfile_available = true;
     }
+    dram.execute(&bus);
 }
 //     if(std::getline(files[1],line)){
 //         result=readLabelAndData(line);
@@ -123,6 +127,7 @@ while(Readfile_available) {
 //     }
 //     total_cycles++;
 // }
+
 
     std::cout << "TOTAL CYCLES: " << total_cycles << std::endl;
     cpu1.PrintStats();
