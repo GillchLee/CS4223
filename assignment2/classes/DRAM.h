@@ -1,16 +1,22 @@
 #ifndef DRAM_H
 #define DRAM_H
-#include <cstdint>
+#include <queue>
+
+#include "Bus.h"
 
 
 class DRAM {
-    // uint8_t* memory;   //memory 1bytes
-    size_t size;        //size of dram (# of words)
+    bool isBusy = false;
+    int cyclesLeft = 0;
+    int address = 0;
+    std::queue<BusTransaction> queue;
 
 public:
-    DRAM(size_t size);
-    size_t getSize();
-};
 
+    void execute(Bus *bus);
+    void putOnDRAM(int address);
+
+    DRAM();
+};
 
 #endif //DRAM_H

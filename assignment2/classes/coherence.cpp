@@ -12,15 +12,7 @@
 #include "Cache.h"
 #include "DRAM.h"
 
-//#define protocol 0 1 (MESI or DRAGON)
-
 #define DRAMsize 0xFFFFFFFF // 4GB DRAM
-
-int CACHE_SIZE = 4096;
-int CACHE_ASSOC = 2;
-int CACHE_BLOCK_SIZE = 32;
-std::string FILE_NAME = "blackscholes_";
-std::string PROTOCOL = "NONE";
 
 // Function to read one line from the file and return label and data (as integer)
 std::pair<int, unsigned int> readLabelAndData(const std::string& line) {

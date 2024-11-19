@@ -18,7 +18,7 @@ class Cache {
 public:
     // Constructor
     Cache(int cacheSize, int blockSize, int associativity);
-    bool access(int address, Bus bus);
+    bool access(int address, Bus *bus);
     bool set_hit_or_not = false;
     bool hit = false;
 };

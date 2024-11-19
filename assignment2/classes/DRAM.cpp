@@ -1,12 +1,25 @@
-//
-// Created by Diana on 11/17/2024.
-//
-
 #include "DRAM.h"
 
-DRAM::DRAM(size_t size) : size(size) {}
+DRAM::DRAM() : DRAM(){}
 
-
-size_t DRAM::getSize() { // return size
-    return size;
+void DRAM::execute(Bus *bus) {
+    if (isBusy && cyclesLeft == 0) {
+        isBusy = false;
+        bus->putOnBus(BusTransaction::ReadResponseTransaction(address));
+    } else if (isBusy) {
+        cyclesLeft--;
+    }
+    if (!isBusy && !queue.empty()) {
+        BusTransaction newTransaction = queue.front();
+        queue.pop();
+        while (!queue.empty() && !newTransaction.isValid) {
+            newTransaction = queue.front();
+            queue.pop();
+        }
+        if (newTransaction.isValid) {
+            isBusy = true;
+            cyclesLeft = 99;
+            address = newTransaction.address;
+        }
+    }
 }

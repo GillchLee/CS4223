@@ -14,7 +14,7 @@ Cache::Cache(int cacheSize, int blockSize, int associativity)
     sets.resize(numSets);
 }
 
-bool Cache::access(int address, Bus bus) {
+bool Cache::access(int address, Bus* bus) {
     int blockIndex = (address / blockSize) % numSets;  // Calculate set index
     int tag = address / (blockSize * numSets);          // Calculate tag
 
@@ -36,8 +36,11 @@ bool Cache::access(int address, Bus bus) {
     if (set.size() >= associativity) {
         // If the set is full, remove the least recently used (LRU) cache line
         set.pop_back();
-        bus.putOnBus(BusTransaction::WriteBackTransaction());
+        bus->putOnBus(BusTransaction::WriteBackTransaction());
     }
+
+    //TODO:FIX THIS
+    bus->putOnBus((BusTransaction::ReadTransaction()));
 
     // Add a new cache line with the correct tag
     CacheLine newLine;
