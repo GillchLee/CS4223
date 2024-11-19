@@ -9,12 +9,12 @@ class DRAM {
     bool isBusy = false;
     int cyclesLeft = 0;
     int address = 0;
-    std::queue<BusTransaction> queue;
+    std::queue<int> queue;
 
 public:
 
     void execute(Bus *bus);
-    void putOnDRAM(int address);
+    void putOnDRAM(BusTransaction *bt);
 
     DRAM();
 };

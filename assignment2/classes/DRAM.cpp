@@ -10,16 +10,16 @@ void DRAM::execute(Bus *bus) {
         cyclesLeft--;
     }
     if (!isBusy && !queue.empty()) {
-        BusTransaction newTransaction = queue.front();
+        int newAddress = queue.front();
         queue.pop();
-        while (!queue.empty() && !newTransaction.isValid) {
-            newTransaction = queue.front();
-            queue.pop();
-        }
-        if (newTransaction.isValid) {
-            isBusy = true;
-            cyclesLeft = 99;
-            address = newTransaction.address;
-        }
+        isBusy = true;
+        cyclesLeft = 99;
+        address = newAddress;
+    }
+}
+
+void DRAM::putOnDRAM(BusTransaction *bt) {
+    if (bt->isValid){
+    queue.push(bt->address);
     }
 }

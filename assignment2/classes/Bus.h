@@ -1,18 +1,19 @@
 
 #ifndef BUS_H
 #define BUS_H
+#include <queue>
+
 #include "BusTransaction.h"
-
-
-//TODO: Implement bus state that it broadcasts to the entire system. Also implement a queue for who drives the bus.
-extern unsigned int busTraffic;
+#include "DRAM.h"
 
 class Bus {
-private:
-    bool isOccupied = false;
-
+std::queue<BusTransaction*> queue;
 public:
-    void putOnBus(BusTransaction transaction);
+    int busTraffic = 0;
+    BusTransaction *currentTransaction = nullptr;
+
+    void execute(DRAM *dram);
+    void putOnBus(BusTransaction *b);
 };
 
 #endif //BUS_H

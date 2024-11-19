@@ -1,7 +1,22 @@
-//
-// Created by Diana on 11/17/2024.
-//
-
 #include "Bus.h"
 
-unsigned int busTraffic = 0;
+void Bus::execute(DRAM *dram) {
+    if (currentTransaction != nullptr) {
+        busTraffic++;
+        if (currentTransaction->size == 0) {
+            if (currentTransaction->type == BusTransaction::ReadShared || currentTransaction->type == BusTransaction::ReadExclusive) {
+                dram->putOnDRAM(currentTransaction);
+            }
+            delete currentTransaction;
+            currentTransaction = queue.front();
+            queue.pop();
+        }else {
+            currentTransaction->size--;
+        }
+    }
+}
+
+void Bus::putOnBus(BusTransaction *b) {
+    queue.push(b);
+}
+
