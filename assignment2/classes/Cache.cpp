@@ -1,6 +1,7 @@
 #include "Cache.h"
 
 #include "Bus.h"
+#include "BusTransaction.h"
 // #include "Constants.h"
 
 Cache::Cache(int cacheSize, int blockSize, int associativity)
@@ -13,7 +14,7 @@ Cache::Cache(int cacheSize, int blockSize, int associativity)
     sets.resize(numSets);
 }
 
-bool Cache::access(int address) {
+bool Cache::access(int address, Bus bus) {
     int blockIndex = (address / blockSize) % numSets;  // Calculate set index
     int tag = address / (blockSize * numSets);          // Calculate tag
 
@@ -35,9 +36,7 @@ bool Cache::access(int address) {
     if (set.size() >= associativity) {
         // If the set is full, remove the least recently used (LRU) cache line
         set.pop_back();
-        const int WORD_SIZE = 4;
-        int BANDWIDTH_PENALTY = 2 * (blockSize / WORD_SIZE);
-        busTraffic = busTraffic + (BANDWIDTH_PENALTY/2);
+        bus.putOnBus(BusTransaction::WriteBackTransaction());
     }
 
     // Add a new cache line with the correct tag

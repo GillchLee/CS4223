@@ -11,7 +11,6 @@ class CacheLine {
 public:
     bool valid;
     int tag;
-    //int data;   do not need for simulation
 
     CacheLine() : valid(false), tag(-1) {}
 };

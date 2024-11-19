@@ -15,7 +15,6 @@ bool CPU::Execute( const int input_label, const unsigned int input_data){ // acc
         total_instructions++;
         on_process = true;
     }
-    // else{
         if(label == 2){ // start computing and hold cycles for "data time". if input_data is 0xc, wait for 12 cycles to compute.
             if( target_cycles == cycles){
                 total_instructions += cycles-1;
@@ -29,8 +28,7 @@ bool CPU::Execute( const int input_label, const unsigned int input_data){ // acc
         }
         else if(label == 0 || label==1){ //cache access
             if( !cache->set_hit_or_not){        // Check if we already accessed to the cache or not
-                //TODO: Make it so that when there is cache eviction, this will stall until done driving the bus with the writeback.
-                cache->hit = cache->access(data);
+                cache->hit = cache->access(data, bus);
                 if(cache->hit) cache_hit++;
                 else cache_miss++;
                 cache->set_hit_or_not = true;
@@ -38,7 +36,6 @@ bool CPU::Execute( const int input_label, const unsigned int input_data){ // acc
             if(cache->hit){ // cache hit
                 if(cycles == 1){
                     on_process = false;
-                    // total_cycles += cycles;
                     idleCycles++;
                     cycles = 0;
                     cache->set_hit_or_not = false;
@@ -49,17 +46,8 @@ bool CPU::Execute( const int input_label, const unsigned int input_data){ // acc
             }
             else {
                 //cache miss -> dram access.
-                //TODO: change this so that it just attempts to drive the bus and send a read request.
-                // the DRAM will then wait the 100 cycles then send back the data
-
-                const int DRAM_PENALTY = 100;
-                const int CACHE_HIT_PENALTY = 1;
-                const int WORD_SIZE = 4;
-                const int BANDWIDTH_PENALTY = 2 * (blockSize / WORD_SIZE);
-                if(cycles == (DRAM_PENALTY + CACHE_HIT_PENALTY + BANDWIDTH_PENALTY)){
-                    busTraffic += (BANDWIDTH_PENALTY/2);
+                if(bus->getTransaction().address == input_data){
                     on_process = false;
-                    // total_cycles += cycles;
                     cycles = 0;
                     cache ->set_hit_or_not = false;
                 }
@@ -69,6 +57,6 @@ bool CPU::Execute( const int input_label, const unsigned int input_data){ // acc
                 }
             }
         }
-    // }
+    total_cycles++;
     return on_process;
 }

@@ -3,6 +3,7 @@
 #include <list>
 #include <vector>
 
+#include "Bus.h"
 #include "CacheLine.h"
 
 
@@ -17,7 +18,7 @@ class Cache {
 public:
     // Constructor
     Cache(int cacheSize, int blockSize, int associativity);
-    bool access(int address);
+    bool access(int address, Bus bus);
     bool set_hit_or_not = false;
     bool hit = false;
 };

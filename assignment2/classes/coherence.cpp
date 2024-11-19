@@ -105,11 +105,11 @@ bool Readfile_available = true;
 
 while(Readfile_available) {
     Readfile_available = false;
+    total_cycles++;
 
     if(std::getline(files[0], line)){
-        result=readLabelAndData(line);
-        while (cpu1.Execute(result.first, result.second)) {
-            total_cycles++;
+        if (!cpu1.Execute(result.first, result.second)) {
+            result=readLabelAndData(line);
         }
         Readfile_available = true;
     }
