@@ -14,21 +14,19 @@ void CPU::snoop() {
 
 bool CPU::Execute(const int input_label, const unsigned int input_data) {
     // access cache, dram. and compute
-    int address = -1;
     if (!on_process) {
         // if there's no instruction in CPU, insert label and data to CPU
 
         label = input_label;
         data = input_data;
-        address = input_data;
         target_cycles = data;
 
         if (label == 0 || label == 1) num_ls++; // for counting # of load/store
         total_instructions++;
         on_process = true;
         cycles = 0;
-        if (label == 1 || label == 2) {
-            state = cache->getState(address);
+        if (label == 0 || label == 1) {
+            state = cache->getState(input_data);
             return true; // causes it to stall 1 cycle for cache penalty
         }
     }
@@ -46,15 +44,15 @@ bool CPU::Execute(const int input_label, const unsigned int input_data) {
         idleCycles++;
         // Read
         if (state == Constants::I_State) {
-            cache_miss++;
             if (!readRequestSent) {
+                cache_miss++;
                 readRequestSent = true;
-                bus->putOnBus(BusTransaction::ReadTransaction(address));
+                bus->putOnBus(BusTransaction::ReadTransaction(input_data));
             }
             // if the needed address is on the bus
             if (bus->currentTransaction != nullptr && bus->currentTransaction->address == input_data &&
                 bus->currentTransaction->type == BusTransaction::ReadResponse && bus->currentTransaction->isLast()) {
-                cache->addLine(address, CacheLine(true, cache->calculateTag(address),
+                cache->addLine(input_data, CacheLine(true, cache->calculateTag(input_data),
                                          cache->getNewState(Constants::I_State, true)), bus);
                 resetState();
             }
@@ -72,30 +70,30 @@ bool CPU::Execute(const int input_label, const unsigned int input_data) {
         idleCycles++;
         // Write
         if (state == Constants::I_State) {
-            cache_miss++;
             if (!readRequestSent) {
+                cache_miss++;
                 readRequestSent = true;
-                bus->putOnBus(BusTransaction::ReadXTransaction(address));
+                bus->putOnBus(BusTransaction::ReadXTransaction(input_data));
             }
             if (bus->currentTransaction != nullptr && bus->currentTransaction->address == input_data &&
                 bus->currentTransaction->type == BusTransaction::ReadResponse && bus->currentTransaction->
                 isLast()) {
-                cache->addLine(address, CacheLine(true, cache->calculateTag(address),
+                cache->addLine(input_data, CacheLine(true, cache->calculateTag(input_data),
                          cache->getNewState(Constants::I_State, false)), bus);
                 resetState();
             }
         } else if (state == Constants::S_State) {
             cache_hit++;
-            CacheLine* cl = cache->getLine(address);
-            cl->state = Constants::M_State;
+            // CacheLine* cl = cache->getLine(input_data);
+            // cl->state = Constants::M_State;
             resetState();
         } else if (state == Constants::M_State) {
             cache_hit++;
             resetState();
         } else if (state == Constants::E_State) {
             cache_hit++;
-            CacheLine* cl = cache->getLine(address);
-            cl->state = Constants::M_State;
+            // CacheLine* cl = cache->getLine(input_data);
+            // cl->state = Constants::M_State;
             resetState();
         }
     }
