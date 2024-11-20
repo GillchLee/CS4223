@@ -9,66 +9,99 @@ void CPU::snoop() {
         return;
     }
     BusTransaction *bt = bus->currentTransaction;
-
 }
 
 
-bool CPU::Execute( const int input_label, const unsigned int input_data){ // access cache, dram. and compute
-    if(!on_process){                // if there's no instruction in CPU, insert label and data to CPU
+bool CPU::Execute(const int input_label, const unsigned int input_data) {
+    // access cache, dram. and compute
+    int address = -1;
+    if (!on_process) {
+        // if there's no instruction in CPU, insert label and data to CPU
 
         label = input_label;
-        data  = input_data;
+        data = input_data;
+        address = input_data;
         target_cycles = data;
 
-        if(label == 0 || label == 1)  num_ls++;  // for counting # of load/store
+        if (label == 0 || label == 1) num_ls++; // for counting # of load/store
         total_instructions++;
         on_process = true;
-        cache->set_hit_or_not = false;
         cycles = 0;
-    }
-    if(label == 2){ // start computing and hold cycles for "data time". if input_data is 0xc, wait for 12 cycles to compute.
-        if( target_cycles == cycles){
-            total_instructions += cycles-1;
-            compute_cycles += cycles;
-            total_cycles--;
-            on_process = false;
-            cycles = 0;
+        if (label == 1 || label == 2) {
+            state = cache->getState(address);
+            return true; // causes it to stall 1 cycle for cache penalty
         }
-        else{
+    }
+    if (label == 2) {
+        // start computing and hold cycles for "data time". if input_data is 0xc, wait for 12 cycles to compute.
+        if (target_cycles == cycles) {
+            total_instructions += cycles - 1;
+            compute_cycles += cycles;
+            total_cycles--; // value was off by 1
+            resetState();
+        } else {
             cycles++;
         }
-    }
-    else if(label == 0 || label==1){ //cache access
-        if(!cache->set_hit_or_not){        // Check if we already accessed to the cache or not
-            cache->hit = cache->access(data, bus, label);
-            if(cache->hit) cache_hit++;
-            else cache_miss++;
-            cache->set_hit_or_not = true;
+    } else if (label == 0) {
+        idleCycles++;
+        // Read
+        if (state == Constants::I_State) {
+            cache_miss++;
+            if (!readRequestSent) {
+                readRequestSent = true;
+                bus->putOnBus(BusTransaction::ReadTransaction(address));
+            }
+            // if the needed address is on the bus
+            if (bus->currentTransaction != nullptr && bus->currentTransaction->address == input_data &&
+                bus->currentTransaction->type == BusTransaction::ReadResponse && bus->currentTransaction->isLast()) {
+                cache->addLine(address, CacheLine(true, cache->calculateTag(address),
+                                         cache->getNewState(Constants::I_State, true)), bus);
+                resetState();
+            }
+        } else if (state == Constants::S_State) {
+            cache_hit++;
+            resetState();
+        } else if (state == Constants::M_State) {
+            cache_hit++;
+            resetState();
+        } else if (state == Constants::E_State) {
+            cache_hit++;
+            resetState();
         }
-        if(cache->hit && cache->containsValidAddress(data)){ // cache hit
-            if(cycles == 1){
-                on_process = false;
+    } else if (label == 1) {
+        idleCycles++;
+        // Write
+        if (state == Constants::I_State) {
+            cache_miss++;
+            if (!readRequestSent) {
+                readRequestSent = true;
+                bus->putOnBus(BusTransaction::ReadXTransaction(address));
             }
-            else{
-                cycles++;
-                idleCycles++;
+            if (bus->currentTransaction != nullptr && bus->currentTransaction->address == input_data &&
+                bus->currentTransaction->type == BusTransaction::ReadResponse && bus->currentTransaction->
+                isLast()) {
+                cache->addLine(address, CacheLine(true, cache->calculateTag(address),
+                         cache->getNewState(Constants::I_State, false)), bus);
+                resetState();
             }
-        }
-        else {
-            //cache miss -> dram access.
-            if(bus->currentTransaction != nullptr && bus->currentTransaction->address == input_data &&
-                bus->currentTransaction->type == BusTransaction::ReadResponse && bus->currentTransaction->isLast()){
-                cache->hit = true;
-
-                CacheLine newLine;
-                newLine.valid = true;
-                newLine.tag = cache->calculateTag(bus->currentTransaction->address);
-                newLine.state = cache->getNewState(Constants::I_State, bus->currentTransaction->address);
-                cache->sets[cache->calculateBlockIdx(bus->currentTransaction->address)].push_front(newLine);
-            }
-            idleCycles++;
+        } else if (state == Constants::S_State) {
+            cache_hit++;
+            resetState();
+        } else if (state == Constants::M_State) {
+            cache_hit++;
+            resetState();
+        } else if (state == Constants::E_State) {
+            cache_hit++;
+            resetState();
         }
     }
     total_cycles++;
     return on_process;
+}
+
+void CPU::resetState() {
+    on_process = false;
+    readRequestSent = false;
+    state = Constants::NO_State;
+    cycles = 0;
 }
