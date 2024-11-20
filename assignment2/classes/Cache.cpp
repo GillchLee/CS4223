@@ -25,20 +25,18 @@ int Cache::calculateBlockIdx(int address) {
 
 
 CacheLine* Cache::getLine(int address) {
-//     int blockIndex = (address / blockSize) % numSets;  // Calculate set index
-//     int tag = address / (blockSize * numSets);          // Calculate tag
-//
-//     // Get the list representing the set
-//     auto& set = sets[blockIndex];
-//
-//     // Check for a cache hit by searching the set for the tag
-//     for (auto it = set.begin(); it != set.end(); ++it) {
-//         if (it->valid && it->tag == tag && it->state != Constants::I_State) {
-//             // On a cache hit, move the cache line to the front (LRU policy)
-//             set.splice(set.begin(), set, it);
-//             return it;
-//         }
-//     }
+     int blockIndex = (address / blockSize) % numSets;  // Calculate set index
+     int tag = address / (blockSize * numSets);          // Calculate tag
+
+     // Get the list representing the set
+     auto& set = sets[blockIndex];
+
+     // Check for a cache hit by searching the set for the tag
+    for (auto& cacheLine : set) {
+        if (cacheLine.tag == tag) {
+            return &cacheLine;
+        }
+    }
 }
 
 bool Cache::access(int address, Bus* bus, int label) {
@@ -82,7 +80,7 @@ void Cache::addLine(int address, CacheLine cache_line, Bus *bus) {
         set.pop_back();
         bus->putOnBus(BusTransaction::WriteBackTransaction());
     }
-    set.push_back(cache_line);
+    set.push_front(cache_line);
 }
 
 Constants::MESI_States Cache::getState(int address) {
@@ -105,6 +103,7 @@ Constants::MESI_States Cache::getState(int address) {
 
 Constants::MESI_States Cache::getNewState(Constants::MESI_States oldState, bool isRead) {
     //TODO: add wires so that you know if I read needs to go to E or S
+    // TODO: after wires r added,
     if (isRead && oldState == Constants::I_State) {
         return Constants::S_State;
     }

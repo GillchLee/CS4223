@@ -59,12 +59,15 @@ bool CPU::Execute(const int input_label, const unsigned int input_data) {
             }
         } else if (state == Constants::S_State) {
             cache_hit++;
+            sharedData++;
             resetState();
         } else if (state == Constants::M_State) {
             cache_hit++;
+            nonSharedData++;
             resetState();
         } else if (state == Constants::E_State) {
             cache_hit++;
+            nonSharedData++;
             resetState();
         }
     } else if (label == 1) {
@@ -85,16 +88,19 @@ bool CPU::Execute(const int input_label, const unsigned int input_data) {
             }
         } else if (state == Constants::S_State) {
             cache_hit++;
-            // CacheLine* cl = cache->getLine(input_data);
-            // cl->state = Constants::M_State;
+            sharedData++;
+            CacheLine* cl = cache->getLine(input_data);
+            cl->state = Constants::M_State;
             resetState();
         } else if (state == Constants::M_State) {
             cache_hit++;
+            nonSharedData++;
             resetState();
         } else if (state == Constants::E_State) {
             cache_hit++;
-            // CacheLine* cl = cache->getLine(input_data);
-            // cl->state = Constants::M_State;
+            nonSharedData++;
+            CacheLine* cl = cache->getLine(input_data);
+            cl->state = Constants::M_State;
             resetState();
         }
     }

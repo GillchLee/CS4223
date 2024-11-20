@@ -35,6 +35,8 @@ private:
     unsigned long cache_miss;
     unsigned long idleCycles= 0;
     unsigned long dataTraffic=0;
+    unsigned long sharedData=0;
+    unsigned long nonSharedData=0;
 public:
     CPU(int blockSize,int id, Cache* cache, Bus* bus, DRAM* dram, int cycles, bool on_process, int label, unsigned int data,
     int target_cycles,
@@ -67,6 +69,8 @@ public:
          std::cout << "Amount of data traffic : " << bus->busTraffic << std::endl;
         std::cout << "Number of invalidations/updates on the bus:0" << std::endl;
         std::cout << "Distribution of accesses to private data : 100%" << std::endl;
+        std::cout << "Shared data : " << sharedData << std::endl;
+        std::cout << "exclusive data : " << nonSharedData << std::endl;
         std::cout <<"\n\n\n" << std::endl;
 
     }
