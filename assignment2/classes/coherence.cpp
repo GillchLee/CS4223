@@ -51,12 +51,12 @@ int main(int argc, char* argv[])
 
     for (int i = 0; i < 4; ++i) {       // put filenaems to filenames[0~3]
         std::string filename = generateFileName(i);
+        filename = "D:/Clion/CS4223AAAA/assignment2/data/blackscholes_" + std::to_string(i) + ".data";
         filenames.push_back(filename);
         std::cout << "Generated filename: " << filename << std::endl;
-    
-    
+
         //Open files
-        std::ifstream file("D:/Clion/CS4223AAAA/assignment2/data/blackscholes_0.data");
+        std::ifstream file(filename);
          if (!file.is_open())
          {
              std::cerr << "can't open file " << filename << std::endl;
@@ -68,8 +68,14 @@ int main(int argc, char* argv[])
     std::cout << "open files succeed" << std::endl;
 
 
-    std::string line;
-    std::pair<int, unsigned int> result;
+    std::string line1;
+    std::string line2;
+    std::string line3;
+    std::string line4;
+    std::pair<int, unsigned int> result1;
+    std::pair<int, unsigned int> result2;
+    std::pair<int, unsigned int> result3;
+    std::pair<int, unsigned int> result4;
 
     
     Bus bus;
@@ -101,16 +107,16 @@ bool flag1;
 bool flag2;
 bool flag3;
 bool flag4;
-if (std::getline(files[0], line)){
+if (std::getline(files[0], line1)){
   flag1=true;
   }
-if (std::getline(files[1], line)){
+if (std::getline(files[1], line2)){
     flag2=true;
 }
-if (std::getline(files[2], line)){
+if (std::getline(files[2], line3)){
     flag3=true;
 }
-if (std::getline(files[3], line)){
+if (std::getline(files[3], line4)){
     flag4=true;
 }
 
@@ -119,55 +125,55 @@ while(Readfile_available) {
     total_cycles++;
     bus.execute(&dram);
     if (flag1){
-        if (!cpu1.Execute(result.first, result.second)) {
-            if (std::getline(files[0], line)){
+        if (!cpu1.Execute(result1.first, result1.second)) {
+            if (std::getline(files[0], line1)){
               flag1=true;
             } else{
               flag1=false;
               }
-            result=readLabelAndData(line);
+            result1=readLabelAndData(line1);
         }
         Readfile_available = true;
     }
-    // if (flag2){
-    //     if (!cpu2.Execute(result.first, result.second)) {
-    //         if (std::getline(files[1], line)){
-    //             flag2=true;
-    //         } else{
-    //             flag2=false;
-    //         }
-    //         result=readLabelAndData(line);
-    //     }
-    //     Readfile_available = true;
-    // }
-    // if (flag3){
-    //     if (!cpu3.Execute(result.first, result.second)) {
-    //         if (std::getline(files[2], line)){
-    //             flag3=true;
-    //         } else{
-    //             flag3=false;
-    //         }
-    //         result=readLabelAndData(line);
-    //     }
-    //     Readfile_available = true;
-    // }
-    // if (flag4){
-    //     if (!cpu4.Execute(result.first, result.second)) {
-    //         if (std::getline(files[3], line)){
-    //             flag4=true;
-    //         } else{
-    //             flag4=false;
-    //         }
-    //         result=readLabelAndData(line);
-    //     }
-    //     Readfile_available = true;
-    // }
+    if (flag2){
+        if (!cpu2.Execute(result2.first, result2.second)) {
+            if (std::getline(files[1], line2)){
+                flag2=true;
+            } else{
+                flag2=false;
+            }
+            result2=readLabelAndData(line2);
+        }
+        Readfile_available = true;
+    }
+    if (flag3){
+        if (!cpu3.Execute(result3.first, result3.second)) {
+            if (std::getline(files[2], line3)){
+                flag3=true;
+            } else{
+                flag3=false;
+            }
+            result3=readLabelAndData(line3);
+        }
+        Readfile_available = true;
+    }
+    if (flag4){
+        if (!cpu4.Execute(result4.first, result4.second)) {
+            if (std::getline(files[3], line4)){
+                flag4=true;
+            } else{
+                flag4=false;
+            }
+            result4=readLabelAndData(line4);
+        }
+        Readfile_available = true;
+    }
     dram.execute(&bus);
 }
     cpu1.PrintStats();
-    // cpu2.PrintStats();
-    // cpu3.PrintStats();
-    // cpu4.PrintStats();
+    cpu2.PrintStats();
+    cpu3.PrintStats();
+    cpu4.PrintStats();
     return 0;
 }
 

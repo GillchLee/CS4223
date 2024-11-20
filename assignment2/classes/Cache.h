@@ -21,6 +21,10 @@ public:
     bool access(int address, Bus *bus);
     bool set_hit_or_not = false;
     bool hit = false;
+
+    bool containsAddress(int address);
+    int calculateTag(int address);
+    int calculateBlockIdx(int address);
 };
 
 

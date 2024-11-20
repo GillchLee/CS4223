@@ -14,6 +14,18 @@ Cache::Cache(int cacheSize, int blockSize, int associativity)
     sets.resize(numSets);
 }
 
+int Cache::calculateTag(int address) {
+    int tag = address / (blockSize * numSets);
+    return tag;
+}
+
+int Cache::calculateBlockIdx(int address) {
+    int blockIndex = (address / blockSize) % numSets;
+    return blockIndex;
+}
+
+
+
 bool Cache::access(int address, Bus* bus) {
     int blockIndex = (address / blockSize) % numSets;  // Calculate set index
     int tag = address / (blockSize * numSets);          // Calculate tag
@@ -37,8 +49,9 @@ bool Cache::access(int address, Bus* bus) {
         bus->putOnBus(BusTransaction::WriteBackTransaction());
     }
 
-    //TODO:FIX THIS
     bus->putOnBus(BusTransaction::ReadTransaction(address));
+
+    //TODO:FIX THIS
 
     // Add a new cache line with the correct tag
     CacheLine newLine;

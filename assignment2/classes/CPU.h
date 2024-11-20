@@ -45,8 +45,6 @@ public:
         int i2, int i3, int i4, int i5, int i6, int i7, int i8,
         int i9, int i10);
 
-    bool isDataReceived(unsigned int data);
-
     // Function to read operations from a file
     bool Execute( int input_label, unsigned int input_data);
 
@@ -63,6 +61,7 @@ public:
          std::cout << "Amount of data traffic : " << bus->busTraffic << std::endl;
         std::cout << "Number of invalidations/updates on the bus:0" << std::endl;
         std::cout << "Distribution of accesses to private data : 100%" << std::endl;
+        std::cout <<"\n\n\n" << std::endl;
 
     }
 };
