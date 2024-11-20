@@ -27,6 +27,7 @@ bool CPU::Execute(const int input_label, const unsigned int input_data) {
         cycles = 0;
         if (label == 0 || label == 1) {
             state = cache->getState(input_data);
+            total_cycles++;
             return true; // causes it to stall 1 cycle for cache penalty
         }
     }
