@@ -14,49 +14,44 @@ bool CPU::Execute( const int input_label, const unsigned int input_data){ // acc
         if(label == 0 || label == 1)  num_ls++;  // for counting # of load/store
         total_instructions++;
         on_process = true;
+        cache->set_hit_or_not = false;
+        cycles = 0;
     }
-        if(label == 2){ // start computing and hold cycles for "data time". if input_data is 0xc, wait for 12 cycles to compute.
-            if( target_cycles == cycles){
-                total_instructions += cycles-1;
-                compute_cycles += cycles;
+    if(label == 2){ // start computing and hold cycles for "data time". if input_data is 0xc, wait for 12 cycles to compute.
+        if( target_cycles == cycles){
+            total_instructions += cycles-1;
+            compute_cycles += cycles;
+            on_process = false;
+            cycles = 0;
+        }
+        else{
+            cycles++;
+        }
+    }
+    else if(label == 0 || label==1){ //cache access
+        if( !cache->set_hit_or_not){        // Check if we already accessed to the cache or not
+            cache->hit = cache->access(data, bus);
+            if(cache->hit) cache_hit++;
+            else cache_miss++;
+            cache->set_hit_or_not = true;
+        }
+        if(cache->hit){ // cache hit
+            if(cycles == 1){
                 on_process = false;
-                cycles = 0;
             }
             else{
-                cycles++;
+                cycles ++;
             }
+            idleCycles++;
         }
-        else if(label == 0 || label==1){ //cache access
-            if( !cache->set_hit_or_not){        // Check if we already accessed to the cache or not
-                cache->hit = cache->access(data, bus);
-                if(cache->hit) cache_hit++;
-                else cache_miss++;
-                cache->set_hit_or_not = true;
+        else {
+            //cache miss -> dram access.
+            if(bus->currentTransaction != nullptr && bus->currentTransaction->address == input_data && bus->currentTransaction->type == BusTransaction::ReadResponse){
+                cache->hit = true;
             }
-            if(cache->hit){ // cache hit
-                if(cycles == 1){
-                    on_process = false;
-                    idleCycles++;
-                    cycles = 0;
-                    cache->set_hit_or_not = false;
-                }
-                else{
-                    cycles ++;
-                }
-            }
-            else {
-                //cache miss -> dram access.
-                if(bus->currentTransaction != nullptr && bus->currentTransaction->address == input_data && bus->currentTransaction->type == BusTransaction::ReadResponse){
-                    on_process = false;
-                    cycles = 0;
-                    cache ->set_hit_or_not = false;
-                }
-                else{
-                    idleCycles++;
-                    cycles++;
-                }
-            }
+            idleCycles++;
         }
+    }
     total_cycles++;
     return on_process;
 }

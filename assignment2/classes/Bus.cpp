@@ -8,6 +8,7 @@ void Bus::execute(DRAM *dram) {
                 dram->putOnDRAM(currentTransaction);
             }
             // delete currentTransaction;
+            currentTransaction = nullptr;
             if (!queue.empty()) {
                 currentTransaction = queue.front();
                 queue.pop();

@@ -7,9 +7,6 @@
 #include "Cache.h"
 #include "DRAM.h"
 
-
-
-//TODO: add a drive bus method that will switch the state of the CPU from idle to driving bus
 class CPU {
 private:
     int blockSize;      // Size of each cache block in bytes
@@ -55,6 +52,7 @@ public:
 
     void PrintStats() const {
         double IPC = static_cast<double>(total_instructions) / static_cast<double>(total_cycles);
+        std::cout << "Total cycles:" << total_cycles << std::endl;
         std::cout << "Total instructions:" << total_instructions << std::endl;
         // std::cout << "IPC : " << IPC << std::endl;
         std::cout << "Number of Load/Store Operations: " << num_ls << std::endl;
@@ -62,7 +60,7 @@ public:
         std::cout << "Cache hit : " << cache_hit << std::endl;
         std::cout << "Cache miss : " << cache_miss << std::endl;
         std::cout << "Idle cycles : " << idleCycles << std::endl;
-        // std::cout << "Amount of data traffic : " << busTraffic << std::endl;
+         std::cout << "Amount of data traffic : " << bus->busTraffic << std::endl;
         std::cout << "Number of invalidations/updates on the bus:0" << std::endl;
         std::cout << "Distribution of accesses to private data : 100%" << std::endl;
 

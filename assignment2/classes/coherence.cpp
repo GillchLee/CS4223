@@ -97,41 +97,29 @@ int main(int argc, char* argv[])
 
 unsigned long long total_cycles = -1;
 bool Readfile_available = true;
+bool flag1;
+if (std::getline(files[0], line)){
+  flag1=true;
+  }
 
 while(Readfile_available) {
     Readfile_available = false;
     total_cycles++;
     bus.execute(&dram);
-    if(std::getline(files[0], line)){
+    if (flag1){
         if (!cpu1.Execute(result.first, result.second)) {
+            if (std::getline(files[0], line)){
+              flag1=true;
+            } else{
+              flag1=false;
+              }
             result=readLabelAndData(line);
         }
         Readfile_available = true;
     }
     dram.execute(&bus);
 }
-//     if(std::getline(files[1],line)){
-//         result=readLabelAndData(line);
-//         cpu2.Execute(result.first, result.second);
-//         Readfile_available = true;
-//     }
-//     if(std::getline(files[2], line)){
-//         result=readLabelAndData(line);
-//         cpu3.Execute(result.first, result.second);
-//         Readfile_available = true;
-//     }
-//     if(std::getline(files[3],line)){
-//         result=readLabelAndData(line);
-//         cpu4.Execute(result.first, result.second);
-//         Readfile_available = true;
-//     }
-//     total_cycles++;
-// }
-
-
-    std::cout << "TOTAL CYCLES: " << total_cycles << std::endl;
     cpu1.PrintStats();
-
     return 0;
 }
 

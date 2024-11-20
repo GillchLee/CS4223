@@ -22,15 +22,15 @@ public:
     BusTransaction(int type, int size, bool isValid, int address): type(type), size(size), isValid(isValid), address(address){}
 
     static BusTransaction *WriteBackTransaction() {
-        return new BusTransaction(WriteBack, CACHE_BLOCK_SIZE, true);
+        return new BusTransaction(WriteBack, 2*(CACHE_BLOCK_SIZE / WORD_SIZE), true);
     }
 
     static BusTransaction *ReadTransaction(int address) {
-        return new BusTransaction(ReadShared, CACHE_BLOCK_SIZE, true, address);
+        return new BusTransaction(ReadShared, 1, true, address);
     }
 
     static BusTransaction *ReadResponseTransaction(int address) {
-        return new BusTransaction(ReadResponse, CACHE_BLOCK_SIZE, true, address);
+        return new BusTransaction(ReadResponse, 2*(CACHE_BLOCK_SIZE / WORD_SIZE), true, address);
     }
 
     bool isLast();
