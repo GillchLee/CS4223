@@ -12,10 +12,10 @@ class Cache {
     int blockSize;      // Size of each cache block in bytes
     int associativity;  // Associativity (n-way set-associative)
     int numSets;        // Total number of sets
-    std::vector<std::list<CacheLine>> sets;  // List of sets, each containing cache lines
 
 
 public:
+    std::vector<std::list<CacheLine>> sets;  // List of sets, each containing cache lines
     // Constructor
     Cache(int cacheSize, int blockSize, int associativity);
     bool access(int address, Bus *bus);

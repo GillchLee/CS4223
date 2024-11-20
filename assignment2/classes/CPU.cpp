@@ -50,6 +50,11 @@ bool CPU::Execute( const int input_label, const unsigned int input_data){ // acc
             if(bus->currentTransaction != nullptr && bus->currentTransaction->address == input_data &&
                 bus->currentTransaction->type == BusTransaction::ReadResponse && bus->currentTransaction->isLast()){
                 cache->hit = true;
+
+                CacheLine newLine;
+                newLine.valid = true;
+                newLine.tag = cache->calculateTag(bus->currentTransaction->address);
+                cache->sets[cache->calculateBlockIdx(bus->currentTransaction->address)].push_front(newLine);
             }
             idleCycles++;
         }

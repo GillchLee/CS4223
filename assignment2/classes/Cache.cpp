@@ -45,19 +45,10 @@ bool Cache::access(int address, Bus* bus) {
     if (set.size() >= associativity) {
         // If the set is full, remove the least recently used (LRU) cache line
         set.pop_back();
-        //TODO: BE CAREFUL WITH THIS - ENSURES THAT WRITEBACK BLOCKS BY PUTTING ON QUEUE BEFORE READTRANSACTION
         bus->putOnBus(BusTransaction::WriteBackTransaction());
     }
 
     bus->putOnBus(BusTransaction::ReadTransaction(address));
-
-    //TODO:FIX THIS
-
-    // Add a new cache line with the correct tag
-    CacheLine newLine;
-    newLine.valid = true;
-    newLine.tag = tag;
-    set.push_front(newLine);
 
     return false;  // Cache miss
 }
