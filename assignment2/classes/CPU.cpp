@@ -86,12 +86,16 @@ bool CPU::Execute(const int input_label, const unsigned int input_data) {
             }
         } else if (state == Constants::S_State) {
             cache_hit++;
+            CacheLine* cl = cache->getLine(address);
+            cl->state = Constants::M_State;
             resetState();
         } else if (state == Constants::M_State) {
             cache_hit++;
             resetState();
         } else if (state == Constants::E_State) {
             cache_hit++;
+            CacheLine* cl = cache->getLine(address);
+            cl->state = Constants::M_State;
             resetState();
         }
     }

@@ -20,16 +20,17 @@ public:
     Cache(int cacheSize, int blockSize, int associativity);
     bool access(int address, Bus *bus, int label);
 
-    Constants::MESI_States getNewState(Constants::MESI_States oldState, bool isRead);
+    static Constants::MESI_States getNewState(Constants::MESI_States oldState, bool isRead);
 
     Constants::MESI_States getState(int address);
 
     void addLine(int address, CacheLine cache_line, Bus *bus);
 
+    CacheLine* getLine(int address);
+
     bool set_hit_or_not = false;
     bool hit = false;
 
-    bool containsValidAddress(int address);
     int calculateTag(int address);
     int calculateBlockIdx(int address);
 };

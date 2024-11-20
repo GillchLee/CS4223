@@ -24,6 +24,22 @@ int Cache::calculateBlockIdx(int address) {
 }
 
 
+CacheLine* Cache::getLine(int address) {
+    int blockIndex = (address / blockSize) % numSets;  // Calculate set index
+    int tag = address / (blockSize * numSets);          // Calculate tag
+
+    // Get the list representing the set
+    auto& set = sets[blockIndex];
+
+    // Check for a cache hit by searching the set for the tag
+    for (auto it = set.begin(); it != set.end(); ++it) {
+        if (it->valid && it->tag == tag && it->state != Constants::I_State) {
+            // On a cache hit, move the cache line to the front (LRU policy)
+            set.splice(set.begin(), set, it);
+            return it;
+        }
+    }
+}
 
 bool Cache::access(int address, Bus* bus, int label) {
     int blockIndex = (address / blockSize) % numSets;  // Calculate set index
