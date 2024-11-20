@@ -33,6 +33,7 @@ bool Cache::access(int address, Bus* bus) {
     if (set.size() >= associativity) {
         // If the set is full, remove the least recently used (LRU) cache line
         set.pop_back();
+        //TODO: BE CAREFUL WITH THIS - ENSURES THAT WRITEBACK BLOCKS BY PUTTING ON QUEUE BEFORE READTRANSACTION
         bus->putOnBus(BusTransaction::WriteBackTransaction());
     }
 

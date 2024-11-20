@@ -21,6 +21,7 @@ bool CPU::Execute( const int input_label, const unsigned int input_data){ // acc
         if( target_cycles == cycles){
             total_instructions += cycles-1;
             compute_cycles += cycles;
+            total_cycles--;
             on_process = false;
             cycles = 0;
         }
@@ -29,7 +30,7 @@ bool CPU::Execute( const int input_label, const unsigned int input_data){ // acc
         }
     }
     else if(label == 0 || label==1){ //cache access
-        if( !cache->set_hit_or_not){        // Check if we already accessed to the cache or not
+        if(!cache->set_hit_or_not){        // Check if we already accessed to the cache or not
             cache->hit = cache->access(data, bus);
             if(cache->hit) cache_hit++;
             else cache_miss++;
@@ -40,13 +41,14 @@ bool CPU::Execute( const int input_label, const unsigned int input_data){ // acc
                 on_process = false;
             }
             else{
-                cycles ++;
+                cycles++;
+                idleCycles++;
             }
-            idleCycles++;
         }
         else {
             //cache miss -> dram access.
-            if(bus->currentTransaction != nullptr && bus->currentTransaction->address == input_data && bus->currentTransaction->type == BusTransaction::ReadResponse){
+            if(bus->currentTransaction != nullptr && bus->currentTransaction->address == input_data &&
+                bus->currentTransaction->type == BusTransaction::ReadResponse && bus->currentTransaction->isLast()){
                 cache->hit = true;
             }
             idleCycles++;
