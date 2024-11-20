@@ -16,6 +16,8 @@ private:
     DRAM* dram;        // Shared DRAM
     int cycles;        // Cycle counter
     bool on_process;    // if CPU is working or not
+    Constants::MESI_States state = Constants::NO_State;
+    bool readRequestSent = false;
 
 
     int label;
@@ -47,6 +49,10 @@ public:
 
     // Function to read operations from a file
     bool Execute( int input_label, unsigned int input_data);
+
+    void resetState();
+
+    void snoop();
 
     void PrintStats() const {
         double IPC = static_cast<double>(total_instructions) / static_cast<double>(total_cycles);

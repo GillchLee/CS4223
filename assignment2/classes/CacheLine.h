@@ -1,18 +1,16 @@
-//
-// Created by Diana on 11/17/2024.
-//
-
 #ifndef CACHELINE_H
 #define CACHELINE_H
 
-
+#include "Constants.h"
 
 class CacheLine {
 public:
     bool valid;
     int tag;
+    Constants::MESI_States state;
 
-    CacheLine() : valid(false), tag(-1) {}
+    CacheLine() : valid(false), tag(-1), state(Constants::I_State) {}
+    CacheLine(bool valid, int tag, Constants::MESI_States state) : valid(valid), tag(tag), state(state) {}
 };
 
 

@@ -29,6 +29,10 @@ public:
         return new BusTransaction(ReadShared, 1, true, address);
     }
 
+    static BusTransaction *ReadXTransaction(int address) {
+        return new BusTransaction(ReadExclusive, 1, true, address);
+    }
+
     static BusTransaction *ReadResponseTransaction(int address) {
         return new BusTransaction(ReadResponse, 2*(CACHE_BLOCK_SIZE / WORD_SIZE), true, address);
     }

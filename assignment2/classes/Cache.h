@@ -18,11 +18,18 @@ public:
     std::vector<std::list<CacheLine>> sets;  // List of sets, each containing cache lines
     // Constructor
     Cache(int cacheSize, int blockSize, int associativity);
-    bool access(int address, Bus *bus);
+    bool access(int address, Bus *bus, int label);
+
+    Constants::MESI_States getNewState(Constants::MESI_States oldState, bool isRead);
+
+    Constants::MESI_States getState(int address);
+
+    void addLine(int address, CacheLine cache_line, Bus *bus);
+
     bool set_hit_or_not = false;
     bool hit = false;
 
-    bool containsAddress(int address);
+    bool containsValidAddress(int address);
     int calculateTag(int address);
     int calculateBlockIdx(int address);
 };

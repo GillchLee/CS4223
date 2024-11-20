@@ -4,6 +4,15 @@
 
 #include "CPU.h"
 
+void CPU::snoop() {
+    if (!bus->currentTransaction) {
+        return;
+    }
+    BusTransaction *bt = bus->currentTransaction;
+
+}
+
+
 bool CPU::Execute( const int input_label, const unsigned int input_data){ // access cache, dram. and compute
     if(!on_process){                // if there's no instruction in CPU, insert label and data to CPU
 
@@ -31,12 +40,12 @@ bool CPU::Execute( const int input_label, const unsigned int input_data){ // acc
     }
     else if(label == 0 || label==1){ //cache access
         if(!cache->set_hit_or_not){        // Check if we already accessed to the cache or not
-            cache->hit = cache->access(data, bus);
+            cache->hit = cache->access(data, bus, label);
             if(cache->hit) cache_hit++;
             else cache_miss++;
             cache->set_hit_or_not = true;
         }
-        if(cache->hit){ // cache hit
+        if(cache->hit && cache->containsValidAddress(data)){ // cache hit
             if(cycles == 1){
                 on_process = false;
             }
@@ -54,6 +63,7 @@ bool CPU::Execute( const int input_label, const unsigned int input_data){ // acc
                 CacheLine newLine;
                 newLine.valid = true;
                 newLine.tag = cache->calculateTag(bus->currentTransaction->address);
+                newLine.state = cache->getNewState(Constants::I_State, bus->currentTransaction->address);
                 cache->sets[cache->calculateBlockIdx(bus->currentTransaction->address)].push_front(newLine);
             }
             idleCycles++;
