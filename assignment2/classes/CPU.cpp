@@ -51,7 +51,7 @@ void CPU::snoop() {
 }
 
 
-bool CPU::Execute(const int input_label, const unsigned int input_data) {
+bool CPU::Execute(const int input_label, const int input_data) {
     // access cache, dram. and compute
     if (!on_process) {
         // if there's no instruction in CPU, insert label and data to CPU

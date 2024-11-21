@@ -46,28 +46,23 @@ public:
         target_cycles(100),
         total_instructions(0), total_cycles(0), num_ls(0), compute_cycles(0), cache_hit(0),cache_miss(0) {}
 
-    CPU(int cache_block_size, int i, Cache * cache, Bus * bus, DRAM(* dram)(), int i1, bool cond,
-        int i2, int i3, int i4, int i5, int i6, int i7, int i8,
-        int i9, int i10);
-
     // Function to read operations from a file
-    bool Execute( int input_label, unsigned int input_data);
+    bool Execute(int input_label, int input_data);
 
     void resetState();
 
     void snoop();
 
     void PrintStats() const {
-        double IPC = static_cast<double>(total_instructions) / static_cast<double>(total_cycles);
+        double IPC = static_cast<double>(nonSharedData) / static_cast<double>(sharedData + nonSharedData);
         std::cout << "Total cycles:" << total_cycles << std::endl;
         std::cout << "Total instructions:" << total_instructions << std::endl;
-        // std::cout << "IPC : " << IPC << std::endl;
         std::cout << "Number of Load/Store Operations: " << num_ls << std::endl;
         std::cout << "Compute Cycles: " << compute_cycles << std::endl;
         std::cout << "Cache hit : " << cache_hit << std::endl;
         std::cout << "Cache miss : " << cache_miss << std::endl;
         std::cout << "Idle cycles : " << idleCycles << std::endl;
-        std::cout << "Distribution of accesses to private data : " << (nonSharedData / (sharedData + nonSharedData)) << std::endl;
+        std::cout << "Distribution of accesses to private data : " << IPC << std::endl;
         std::cout << "Shared data : " << sharedData << std::endl;
         std::cout << "exclusive data : " << nonSharedData << std::endl;
         std::cout <<"\n-----------------------------------------------------------------------------------" << std::endl;
