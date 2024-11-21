@@ -103,21 +103,25 @@ int main(int argc, char* argv[])
 
 unsigned long long total_cycles = -1;
 bool Readfile_available = true;
-bool flag1;
-bool flag2;
-bool flag3;
-bool flag4;
+bool flag1 = false;
+bool flag2 = false;
+bool flag3 = false;
+bool flag4 = false;
 if (std::getline(files[0], line1)){
   flag1=true;
+    result1 = readLabelAndData(line1);
   }
 if (std::getline(files[1], line2)){
     flag2=true;
+    result2= readLabelAndData(line2);
 }
 if (std::getline(files[2], line3)){
     flag3=true;
+    result3= readLabelAndData(line3);
 }
 if (std::getline(files[3], line4)){
     flag4=true;
+    result4= readLabelAndData(line4);
 }
 
 while(Readfile_available) {
@@ -125,6 +129,7 @@ while(Readfile_available) {
     total_cycles++;
     bus.execute(&dram);
     if (flag1){
+        cpu1.snoop();
         if (!cpu1.Execute(result1.first, result1.second)) {
             if (std::getline(files[0], line1)){
               flag1=true;
@@ -135,39 +140,42 @@ while(Readfile_available) {
         }
         Readfile_available = true;
     }
-    // if (flag2){
-    //     if (!cpu2.Execute(result2.first, result2.second)) {
-    //         if (std::getline(files[1], line2)){
-    //             flag2=true;
-    //         } else{
-    //             flag2=false;
-    //         }
-    //         result2=readLabelAndData(line2);
-    //     }
-    //     Readfile_available = true;
-    // }
-    // if (flag3){
-    //     if (!cpu3.Execute(result3.first, result3.second)) {
-    //         if (std::getline(files[2], line3)){
-    //             flag3=true;
-    //         } else{
-    //             flag3=false;
-    //         }
-    //         result3=readLabelAndData(line3);
-    //     }
-    //     Readfile_available = true;
-    // }
-    // if (flag4){
-    //     if (!cpu4.Execute(result4.first, result4.second)) {
-    //         if (std::getline(files[3], line4)){
-    //             flag4=true;
-    //         } else{
-    //             flag4=false;
-    //         }
-    //         result4=readLabelAndData(line4);
-    //     }
-    //     Readfile_available = true;
-    // }
+    if (flag2){
+        cpu2.snoop();
+        if (!cpu2.Execute(result2.first, result2.second)) {
+            if (std::getline(files[1], line2)){
+                flag2=true;
+            } else{
+                flag2=false;
+            }
+            result2=readLabelAndData(line2);
+        }
+        Readfile_available = true;
+    }
+    if (flag3){
+        cpu3.snoop();
+        if (!cpu3.Execute(result3.first, result3.second)) {
+            if (std::getline(files[2], line3)){
+                flag3=true;
+            } else{
+                flag3=false;
+            }
+            result3=readLabelAndData(line3);
+        }
+        Readfile_available = true;
+    }
+    if (flag4){
+        cpu4.snoop();
+        if (!cpu4.Execute(result4.first, result4.second)) {
+            if (std::getline(files[3], line4)){
+                flag4=true;
+            } else{
+                flag4=false;
+            }
+            result4=readLabelAndData(line4);
+        }
+        Readfile_available = true;
+    }
     dram.execute(&bus);
 }
     cpu1.PrintStats();

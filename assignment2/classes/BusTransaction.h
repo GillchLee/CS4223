@@ -38,7 +38,6 @@ public:
     }
 
     bool isLast();
-    void runBus();
 };
 
 #endif //BUSTRANSACTION_H

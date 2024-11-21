@@ -39,6 +39,23 @@ CacheLine* Cache::getLine(int address) {
     }
 }
 
+void Cache::removeLine(int address) {
+    int blockIndex = (address / blockSize) % numSets;  // Calculate set index
+    int tag = address / (blockSize * numSets);          // Calculate tag
+
+    // Get the list representing the set
+    auto& set = sets[blockIndex];
+
+    // Check for a cache hit by searching the set for the tag
+    for (auto it = set.begin(); it != set.end(); ++it) {
+        if (it->valid && it->tag == tag && it->state != Constants::I_State) {
+            // On a cache hit, move the cache line to the front (LRU policy)
+            set.erase(it);
+            return;
+        }
+    }
+}
+
 void Cache::addLine(int address, CacheLine cache_line, Bus *bus) {
     int blockIndex = (address / blockSize) % numSets;  // Calculate set index
 
@@ -46,8 +63,9 @@ void Cache::addLine(int address, CacheLine cache_line, Bus *bus) {
     auto& set = sets[blockIndex];
     if (set.size() >= associativity) {
         // If the set is full, remove the least recently used (LRU) cache line
-        //TODO: Only writeback if modified
-        // bus->putOnBus(BusTransaction::WriteBackTransaction());
+        if (set.back().state == Constants::M_State) {
+            bus->putOnBus(BusTransaction::WriteBackTransaction());
+        }
         set.pop_back();
     }
     set.push_front(cache_line);
@@ -71,14 +89,35 @@ Constants::MESI_States Cache::getState(int address) {
     return Constants::I_State;
 }
 
-Constants::MESI_States Cache::getNewState(Constants::MESI_States oldState, bool isRead) {
-    //TODO: add wires so that you know if I read needs to go to E or S
-    // TODO: after wires r added,
+
+Constants::MESI_States Cache::getNewState(Constants::MESI_States oldState, bool isRead, int address) {
     if (isRead && oldState == Constants::I_State) {
-        return Constants::S_State;
+        //TODO: Fix this so that it checks caches as well.
+        if (this->cacheContains(address)) {
+            return Constants::S_State;
+        }
+        else {
+            return Constants::E_State;
+        }
     }
     else if (!isRead && oldState == Constants::I_State) {
         return Constants::M_State;
     }
     return Constants::NO_State;
+}
+
+bool Cache::cacheContains(int address) {
+    int blockIndex = (address / blockSize) % numSets;  // Calculate set index
+    int tag = address / (blockSize * numSets);          // Calculate tag
+
+    // Get the list representing the set
+    auto& set = sets[blockIndex];
+
+    // Check for a cache hit by searching the set for the tag
+    for (auto it = set.begin(); it != set.end(); ++it) {
+        if (it->valid && it->tag == tag && it->state != Constants::I_State) {
+            return true;
+        }
+    }
+    return false;
 }
