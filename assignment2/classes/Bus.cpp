@@ -3,7 +3,7 @@
 void Bus::execute(DRAM *dram) {
     if (currentTransaction != nullptr) {
         busTraffic++;
-        if (currentTransaction->size == 0) {
+        if (currentTransaction->size <= 1) {
             if (currentTransaction->type == BusTransaction::ReadShared || currentTransaction->type == BusTransaction::ReadExclusive) {
                 dram->putOnDRAM(currentTransaction);
             }

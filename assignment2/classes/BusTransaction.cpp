@@ -3,5 +3,5 @@
 
 
 bool BusTransaction::isLast() {
-    return size == 0;
+    return size == 1;
 }

@@ -39,37 +39,6 @@ CacheLine* Cache::getLine(int address) {
     }
 }
 
-bool Cache::access(int address, Bus* bus, int label) {
-    int blockIndex = (address / blockSize) % numSets;  // Calculate set index
-    int tag = address / (blockSize * numSets);          // Calculate tag
-
-    // Get the list representing the set
-    auto& set = sets[blockIndex];
-
-    // Check for a cache hit by searching the set for the tag
-    for (auto it = set.begin(); it != set.end(); ++it) {
-        if (it->valid && it->tag == tag && it->state != Constants::I_State) {
-            // On a cache hit, move the cache line to the front (LRU policy)
-            set.splice(set.begin(), set, it);
-            return true;  // Cache hit
-        }
-    }
-
-    if (set.size() >= associativity) {
-        // If the set is full, remove the least recently used (LRU) cache line
-        set.pop_back();
-        bus->putOnBus(BusTransaction::WriteBackTransaction());
-    }
-
-    if (label == 1) {
-        bus->putOnBus(BusTransaction::ReadXTransaction(address));
-    } else {
-        bus->putOnBus(BusTransaction::ReadTransaction(address));
-    }
-
-    return false;  // Cache miss
-}
-
 void Cache::addLine(int address, CacheLine cache_line, Bus *bus) {
     int blockIndex = (address / blockSize) % numSets;  // Calculate set index
 
@@ -77,8 +46,9 @@ void Cache::addLine(int address, CacheLine cache_line, Bus *bus) {
     auto& set = sets[blockIndex];
     if (set.size() >= associativity) {
         // If the set is full, remove the least recently used (LRU) cache line
+        //TODO: Only writeback if modified
+        // bus->putOnBus(BusTransaction::WriteBackTransaction());
         set.pop_back();
-        bus->putOnBus(BusTransaction::WriteBackTransaction());
     }
     set.push_front(cache_line);
 }

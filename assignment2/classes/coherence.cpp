@@ -135,39 +135,39 @@ while(Readfile_available) {
         }
         Readfile_available = true;
     }
-    if (flag2){
-        if (!cpu2.Execute(result2.first, result2.second)) {
-            if (std::getline(files[1], line2)){
-                flag2=true;
-            } else{
-                flag2=false;
-            }
-            result2=readLabelAndData(line2);
-        }
-        Readfile_available = true;
-    }
-    if (flag3){
-        if (!cpu3.Execute(result3.first, result3.second)) {
-            if (std::getline(files[2], line3)){
-                flag3=true;
-            } else{
-                flag3=false;
-            }
-            result3=readLabelAndData(line3);
-        }
-        Readfile_available = true;
-    }
-    if (flag4){
-        if (!cpu4.Execute(result4.first, result4.second)) {
-            if (std::getline(files[3], line4)){
-                flag4=true;
-            } else{
-                flag4=false;
-            }
-            result4=readLabelAndData(line4);
-        }
-        Readfile_available = true;
-    }
+    // if (flag2){
+    //     if (!cpu2.Execute(result2.first, result2.second)) {
+    //         if (std::getline(files[1], line2)){
+    //             flag2=true;
+    //         } else{
+    //             flag2=false;
+    //         }
+    //         result2=readLabelAndData(line2);
+    //     }
+    //     Readfile_available = true;
+    // }
+    // if (flag3){
+    //     if (!cpu3.Execute(result3.first, result3.second)) {
+    //         if (std::getline(files[2], line3)){
+    //             flag3=true;
+    //         } else{
+    //             flag3=false;
+    //         }
+    //         result3=readLabelAndData(line3);
+    //     }
+    //     Readfile_available = true;
+    // }
+    // if (flag4){
+    //     if (!cpu4.Execute(result4.first, result4.second)) {
+    //         if (std::getline(files[3], line4)){
+    //             flag4=true;
+    //         } else{
+    //             flag4=false;
+    //         }
+    //         result4=readLabelAndData(line4);
+    //     }
+    //     Readfile_available = true;
+    // }
     dram.execute(&bus);
 }
     cpu1.PrintStats();
