@@ -4,7 +4,8 @@ void Bus::execute(DRAM *dram) {
     if (currentTransaction != nullptr) {
         busTraffic++;
         if (currentTransaction->size <= 1) {
-            if (currentTransaction->type == BusTransaction::ReadShared || currentTransaction->type == BusTransaction::ReadExclusive) {
+            if (currentTransaction->type == BusTransaction::ReadShared || currentTransaction->type ==
+                BusTransaction::ReadExclusive || currentTransaction->type == BusTransaction::WriteBack) {
                 dram->putOnDRAM(currentTransaction);
             }
             // delete currentTransaction;
@@ -13,7 +14,7 @@ void Bus::execute(DRAM *dram) {
                 currentTransaction = queue.front();
                 queue.pop();
             }
-        }else {
+        } else {
             currentTransaction->size--;
         }
     } else if (!queue.empty()) {
@@ -25,4 +26,3 @@ void Bus::execute(DRAM *dram) {
 void Bus::putOnBus(BusTransaction *b) {
     queue.push(b);
 }
-

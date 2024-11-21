@@ -3,8 +3,8 @@
 #include "Bus.h"
 #include "BusTransaction.h"
 
-Cache::Cache(int cacheSize, int blockSize, int associativity)
-    : cacheSize(cacheSize), blockSize(blockSize), associativity(associativity) {
+Cache::Cache(int cacheSize, int blockSize, int associativity, cacheWires *cw)
+    : cacheSize(cacheSize), blockSize(blockSize), associativity(associativity), cacheWire(cw) {
 
     // Calculate the number of sets
     numSets = (cacheSize / blockSize) / associativity;
@@ -90,14 +90,13 @@ Constants::MESI_States Cache::getState(int address) {
 }
 
 
-Constants::MESI_States Cache::getNewState(Constants::MESI_States oldState, bool isRead, int address) {
+Constants::MESI_States Cache::getNewState(Constants::MESI_States oldState, bool isRead, int address, Bus *bus) {
     if (isRead && oldState == Constants::I_State) {
-        //TODO: Fix this so that it checks caches as well.
-        if (this->cacheContains(address)) {
+        if (cacheWire->checkAllCaches(address)) {
             return Constants::S_State;
         }
         else {
-            return Constants::E_State;
+        return Constants::E_State;
         }
     }
     else if (!isRead && oldState == Constants::I_State) {

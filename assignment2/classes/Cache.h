@@ -5,24 +5,29 @@
 
 #include "Bus.h"
 #include "CacheLine.h"
+#include "cacheWires.h"
 
+class cacheWires;
 
 class Cache {
     int cacheSize;      // Total cache size in bytes
     int blockSize;      // Size of each cache block in bytes
     int associativity;  // Associativity (n-way set-associative)
     int numSets;        // Total number of sets
+    cacheWires *cacheWire;
 
 
 public:
     std::vector<std::list<CacheLine>> sets;  // List of sets, each containing cache lines
     // Constructor
-    Cache(int cacheSize, int blockSize, int associativity);
+    Cache(int cacheSize, int blockSize, int associativity, cacheWires* cacheWire);
     bool access(int address, Bus *bus, int label);
 
     bool cacheContains(int address);
 
-    Constants::MESI_States getNewState(Constants::MESI_States oldState, bool isRead, int address);
+    Constants::MESI_States getNewState(Constants::MESI_States oldState, bool isRead, int address, Bus *bus);
+
+    bool checkOthers(int address);
 
     Constants::MESI_States getState(int address);
 

@@ -8,7 +8,8 @@
 
 void CPU::snoop() {
     if (!bus->currentTransaction || (bus->currentTransaction->type != BusTransaction::ReadExclusive && bus->
-                                     currentTransaction->type != BusTransaction::ReadShared)) {
+                                     currentTransaction->type != BusTransaction::ReadShared && bus->currentTransaction->
+                                     type != BusTransaction::Invalidate)) {
         return;
     }
     BusTransaction *bt = bus->currentTransaction;
@@ -20,14 +21,19 @@ void CPU::snoop() {
     if (state == Constants::I_State) {
         return;
     }
+    if (bt->type == BusTransaction::Invalidate) {
+        bus->invalidationsCnt++;
+        cache->removeLine(bt->address);
+    }
     if (bt->type == BusTransaction::ReadExclusive) {
+        bus->invalidationsCnt++;
         if (state == Constants::E_State) {
             bt->isValid = false;
             bus->putOnBus(BusTransaction::ReadResponseTransaction(bt->address));
-            bus->putOnBus(BusTransaction::WriteBackTransaction());
         } else if (state == Constants::M_State) {
             bt->isValid = false;
             bus->putOnBus(BusTransaction::ReadResponseTransaction(bt->address));
+            bus->putOnBus(BusTransaction::WriteBackTransaction());
         }
         cache->removeLine(bt->address);
     } else if (bt->type == BusTransaction::ReadShared) {
@@ -88,7 +94,7 @@ bool CPU::Execute(const int input_label, const unsigned int input_data) {
             if (bus->currentTransaction != nullptr && bus->currentTransaction->address == input_data &&
                 bus->currentTransaction->type == BusTransaction::ReadResponse && bus->currentTransaction->isLast()) {
                 cache->addLine(input_data, CacheLine(true, cache->calculateTag(input_data),
-                                                     cache->getNewState(Constants::I_State, true, input_data)), bus);
+                                                     cache->getNewState(Constants::I_State, true, input_data, bus)), bus);
                 resetState();
             }
         } else if (state == Constants::S_State) {
@@ -117,7 +123,7 @@ bool CPU::Execute(const int input_label, const unsigned int input_data) {
                 bus->currentTransaction->type == BusTransaction::ReadResponse && bus->currentTransaction->
                 isLast()) {
                 cache->addLine(input_data, CacheLine(true, cache->calculateTag(input_data),
-                                                     cache->getNewState(Constants::I_State, false, input_data)), bus);
+                                                     cache->getNewState(Constants::I_State, false, input_data, bus)), bus);
                 resetState();
             }
         } else if (state == Constants::S_State) {
@@ -125,6 +131,7 @@ bool CPU::Execute(const int input_label, const unsigned int input_data) {
             sharedData++;
             CacheLine *cl = cache->getLine(input_data);
             cl->state = Constants::M_State;
+            bus->putOnBus(BusTransaction::InvalidateTransaction(input_data));
             resetState();
         } else if (state == Constants::M_State) {
             cache_hit++;

@@ -37,6 +37,10 @@ public:
         return new BusTransaction(ReadResponse, 2*(CACHE_BLOCK_SIZE / WORD_SIZE), true, address);
     }
 
+    static BusTransaction *InvalidateTransaction(int address) {
+        return new BusTransaction(Invalidate, 1, true, address);
+    }
+
     bool isLast();
 };
 

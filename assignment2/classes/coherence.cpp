@@ -10,9 +10,11 @@
 #include "CPU.h"
 #include "Bus.h"
 #include "Cache.h"
+#include "cacheWires.h"
 #include "DRAM.h"
 
 // #define DRAMsize 0xFFFFFFFF // 4GB DRAM
+
 
 // Function to read one line from the file and return label and data (as integer)
 std::pair<int, unsigned int> readLabelAndData(const std::string& line) {
@@ -65,9 +67,6 @@ int main(int argc, char* argv[])
         files.push_back(std::move(file));
     }
 
-    std::cout << "open files succeed" << std::endl;
-
-
     std::string line1;
     std::string line2;
     std::string line3;
@@ -80,23 +79,28 @@ int main(int argc, char* argv[])
     
     Bus bus;
     DRAM dram;
-    Cache cache1(CACHE_SIZE, CACHE_BLOCK_SIZE, CACHE_ASSOC); // Cache size, block size, n-way associative
-    Cache cache2(CACHE_SIZE, CACHE_BLOCK_SIZE, CACHE_ASSOC);
-    Cache cache3(CACHE_SIZE, CACHE_BLOCK_SIZE, CACHE_ASSOC);
-    Cache cache4(CACHE_SIZE, CACHE_BLOCK_SIZE, CACHE_ASSOC);
+    cacheWires cacheWire;
+    Cache cache1(CACHE_SIZE, CACHE_BLOCK_SIZE, CACHE_ASSOC, &cacheWire); // Cache size, block size, n-way associative
+    Cache cache2(CACHE_SIZE, CACHE_BLOCK_SIZE, CACHE_ASSOC, &cacheWire);
+    Cache cache3(CACHE_SIZE, CACHE_BLOCK_SIZE, CACHE_ASSOC, &cacheWire);
+    Cache cache4(CACHE_SIZE, CACHE_BLOCK_SIZE, CACHE_ASSOC, &cacheWire);
 
     CPU cpu1(CACHE_BLOCK_SIZE, 1, &cache1, &bus, &dram, 0, false, -1, 0,
             100, 
             0, 0, 0, 0, 0, 0);
     CPU cpu2(CACHE_BLOCK_SIZE, 2, &cache2, &bus, &dram, 0, false, -1, 0,
-            100, 
-            0, 0, 0, 0, 0 ,0);    
+            100,
+            0, 0, 0, 0, 0 ,0);
     CPU cpu3(CACHE_BLOCK_SIZE, 3, &cache3, &bus, &dram, 0, false, -1, 0,
-            100, 
+            100,
             0, 0, 0, 0, 0, 0);
     CPU cpu4(CACHE_BLOCK_SIZE, 4, &cache4, &bus, &dram, 0, false, -1, 0,
              100,
             0, 0, 0, 0, 0, 0);
+    cacheWire.cache1 = &cache1;
+    cacheWire.cache2 = &cache2;
+    cacheWire.cache3 = &cache3;
+    cacheWire.cache4 = &cache4;
 
 
 // for multicore cycles
@@ -182,6 +186,8 @@ while(Readfile_available) {
     cpu2.PrintStats();
     cpu3.PrintStats();
     cpu4.PrintStats();
+    std::cout << "Invalidation count: " << bus.invalidationsCnt << std::endl;
+    std::cout << "Amount of data traffic : " << bus.busTraffic << std::endl;
     return 0;
 }
 

@@ -1,6 +1,7 @@
 #ifndef CPU_H
 #define CPU_H
 
+#include <iomanip>
 #include <iostream>
 
 #include "Bus.h"
@@ -66,12 +67,10 @@ public:
         std::cout << "Cache hit : " << cache_hit << std::endl;
         std::cout << "Cache miss : " << cache_miss << std::endl;
         std::cout << "Idle cycles : " << idleCycles << std::endl;
-         std::cout << "Amount of data traffic : " << bus->busTraffic << std::endl;
-        std::cout << "Number of invalidations/updates on the bus:0" << std::endl;
-        std::cout << "Distribution of accesses to private data : 100%" << std::endl;
+        std::cout << "Distribution of accesses to private data : " << (nonSharedData / (sharedData + nonSharedData)) << std::endl;
         std::cout << "Shared data : " << sharedData << std::endl;
         std::cout << "exclusive data : " << nonSharedData << std::endl;
-        std::cout <<"\n\n\n" << std::endl;
+        std::cout <<"\n-----------------------------------------------------------------------------------" << std::endl;
 
     }
 };
