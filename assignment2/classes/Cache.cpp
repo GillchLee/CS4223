@@ -5,7 +5,6 @@
 
 Cache::Cache(int cacheSize, int blockSize, int associativity, cacheWires *cw)
     : cacheSize(cacheSize), blockSize(blockSize), associativity(associativity), cacheWire(cw) {
-
     // Calculate the number of sets
     numSets = (cacheSize / blockSize) / associativity;
 
@@ -24,15 +23,15 @@ int Cache::calculateBlockIdx(int address) {
 }
 
 
-CacheLine* Cache::getLine(int address) {
-     int blockIndex = (address / blockSize) % numSets;  // Calculate set index
-     int tag = address / (blockSize * numSets);          // Calculate tag
+CacheLine *Cache::getLine(int address) {
+    int blockIndex = (address / blockSize) % numSets; // Calculate set index
+    int tag = address / (blockSize * numSets); // Calculate tag
 
-     // Get the list representing the set
-     auto& set = sets[blockIndex];
+    // Get the list representing the set
+    auto &set = sets[blockIndex];
 
-     // Check for a cache hit by searching the set for the tag
-    for (auto& cacheLine : set) {
+    // Check for a cache hit by searching the set for the tag
+    for (auto &cacheLine: set) {
         if (cacheLine.tag == tag) {
             return &cacheLine;
         }
@@ -40,11 +39,11 @@ CacheLine* Cache::getLine(int address) {
 }
 
 void Cache::removeLine(int address) {
-    int blockIndex = (address / blockSize) % numSets;  // Calculate set index
-    int tag = address / (blockSize * numSets);          // Calculate tag
+    int blockIndex = (address / blockSize) % numSets; // Calculate set index
+    int tag = address / (blockSize * numSets); // Calculate tag
 
     // Get the list representing the set
-    auto& set = sets[blockIndex];
+    auto &set = sets[blockIndex];
 
     // Check for a cache hit by searching the set for the tag
     for (auto it = set.begin(); it != set.end(); ++it) {
@@ -56,10 +55,10 @@ void Cache::removeLine(int address) {
 }
 
 void Cache::addLine(int address, CacheLine cache_line, Bus *bus) {
-    int blockIndex = (address / blockSize) % numSets;  // Calculate set index
+    int blockIndex = (address / blockSize) % numSets; // Calculate set index
 
     // Get the list representing the set
-    auto& set = sets[blockIndex];
+    auto &set = sets[blockIndex];
     if (set.size() >= associativity) {
         // If the set is full, remove the least recently used (LRU) cache line
         if (set.back().state == Constants::M_State || set.back().state == Constants::Sm_State) {
@@ -71,11 +70,11 @@ void Cache::addLine(int address, CacheLine cache_line, Bus *bus) {
 }
 
 Constants::MESI_States Cache::getState(int address) {
-    int blockIndex = (address / blockSize) % numSets;  // Calculate set index
-    int tag = address / (blockSize * numSets);          // Calculate tag
+    int blockIndex = (address / blockSize) % numSets; // Calculate set index
+    int tag = address / (blockSize * numSets); // Calculate tag
 
     // Get the list representing the set
-    auto& set = sets[blockIndex];
+    auto &set = sets[blockIndex];
 
     // Check for a cache hit by searching the set for the tag
     for (auto it = set.begin(); it != set.end(); ++it) {
@@ -93,15 +92,25 @@ Constants::MESI_States Cache::getNewState(Constants::MESI_States oldState, bool 
     if (isRead && oldState == Constants::I_State) {
         if (cacheWire->checkAllCaches(address)) {
             return Constants::S_State;
-        }
-        else {
+        } else {
             return Constants::E_State;
         }
-    }
-    else if (!isRead && oldState == Constants::I_State) {
+    } else if (!isRead && oldState == Constants::I_State) {
         return Constants::M_State;
     }
     return Constants::NO_State;
+}
+
+Constants::MESI_States Cache::getNewDragonState(Constants::MESI_States oldState, bool isRead, int address) {
+    if (isRead && oldState == Constants::I_State && cacheWire->checkAllCaches(address)) {
+        return Constants::Sc_State;
+    } else if (isRead && oldState == Constants::I_State && !cacheWire->checkAllCaches(address)) {
+        return Constants::E_State;
+    } else if (!isRead && oldState == Constants::I_State && cacheWire->checkAllCaches(address)) {
+        return Constants::Sm_State;
+    } else if (isRead && oldState == Constants::I_State && !cacheWire->checkAllCaches(address)) {
+        return Constants::M_State;
+    }
 }
 
 
@@ -110,11 +119,11 @@ bool Cache::checkOthers(int address) {
 }
 
 bool Cache::cacheContains(int address) {
-    int blockIndex = (address / blockSize) % numSets;  // Calculate set index
-    int tag = address / (blockSize * numSets);          // Calculate tag
+    int blockIndex = (address / blockSize) % numSets; // Calculate set index
+    int tag = address / (blockSize * numSets); // Calculate tag
 
     // Get the list representing the set
-    auto& set = sets[blockIndex];
+    auto &set = sets[blockIndex];
 
     // Check for a cache hit by searching the set for the tag
     for (auto it = set.begin(); it != set.end(); ++it) {

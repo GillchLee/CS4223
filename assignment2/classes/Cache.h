@@ -27,6 +27,8 @@ public:
 
     Constants::MESI_States getNewState(Constants::MESI_States oldState, bool isRead, int address, Bus *bus);
 
+    Constants::MESI_States getNewDragonState(Constants::MESI_States oldState, bool isRead, int address);
+
     bool checkOthers(int address);
 
     Constants::MESI_States getState(int address);

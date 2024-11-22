@@ -193,7 +193,19 @@ bool CPU::ExecuteDragon(int input_label, int input_data) {
         idleCycles++;
         // Read
         if (state == Constants::I_State) {
-            //TODO
+            if (!readRequestSent) {
+                cache_miss++;
+                readRequestSent = true;
+                bus->putOnBus(BusTransaction::ReadTransaction(input_data));
+            }
+            if (bus->currentTransaction != nullptr && bus->currentTransaction->address == input_data &&
+                bus->currentTransaction->type == BusTransaction::ReadResponse && bus->currentTransaction->
+                isLast()) {
+                cache->addLine(input_data, CacheLine(true, cache->calculateTag(input_data),
+                                                     cache->getNewDragonState(Constants::I_State, true, input_data)),
+                               bus);
+                resetState();
+                }
         } else if (state == Constants::E_State) {
             cache_hit++;
             nonSharedData++;
@@ -215,7 +227,22 @@ bool CPU::ExecuteDragon(int input_label, int input_data) {
         idleCycles++;
         // Write
         if (state == Constants::I_State) {
-            //TODO
+            if (!readRequestSent) {
+                cache_miss++;
+                readRequestSent = true;
+                bus->putOnBus(BusTransaction::ReadTransaction(input_data));
+            }
+            if (bus->currentTransaction != nullptr && bus->currentTransaction->address == input_data &&
+                bus->currentTransaction->type == BusTransaction::ReadResponse && bus->currentTransaction->
+                isLast()) {
+                cache->addLine(input_data, CacheLine(true, cache->calculateTag(input_data),
+                                                     cache->getNewDragonState(Constants::I_State, false, input_data)),
+                               bus);
+                if (cache->getNewDragonState(Constants::I_State, false, input_data) == Constants::Sm_State) {
+                    bus->putOnBus(BusTransaction::BusUpdateTransaction(input_data));
+                }
+                resetState();
+                }
         } else if (state == Constants::E_State) {
             cache_hit++;
             nonSharedData++;

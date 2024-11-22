@@ -15,8 +15,8 @@ private:
     Cache* cache;      // Private cache
     Bus* bus;          // Shared bus
     DRAM* dram;        // Shared DRAM
-    int cycles;        // Cycle counter
-    bool on_process;    // if CPU is working or not
+    int cycles = 0;        // Cycle counter
+    bool on_process = false;    // if CPU is working or not
     Constants::MESI_States state = Constants::NO_State;
     bool readRequestSent = false;
 
