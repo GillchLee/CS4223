@@ -68,6 +68,8 @@ public:
         std::cout <<"\n-----------------------------------------------------------------------------------" << std::endl;
 
     }
+
+    bool ExecuteDragon(int input_label, int input_data);
 };
 
 #endif //CPU_H

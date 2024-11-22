@@ -14,7 +14,8 @@ public:
         WriteBack,
         ReadExclusive,
         Invalidate,
-        ReadResponse
+        ReadResponse,
+        Update
     };
 
 
@@ -39,6 +40,10 @@ public:
 
     static BusTransaction *InvalidateTransaction(int address) {
         return new BusTransaction(Invalidate, 1, true, address);
+    }
+
+    static BusTransaction *BusUpdateTransaction(int address) {
+        return new BusTransaction(Update, 2, true, address);
     }
 
     bool isLast();

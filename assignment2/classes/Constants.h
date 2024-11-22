@@ -17,6 +17,9 @@ public:
         E_State,
         S_State,
         I_State,
+        Sc_State,
+        Sm_State,
+        D_State,
         NO_State
     };
 };

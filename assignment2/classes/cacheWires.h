@@ -16,6 +16,8 @@ public:
     Cache *cache4;
 
     bool checkAllCaches(int address);
+
+    bool checkAllOthers(int address, Cache * cache);
 };
 
 

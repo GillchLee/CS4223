@@ -49,7 +49,6 @@ void Cache::removeLine(int address) {
     // Check for a cache hit by searching the set for the tag
     for (auto it = set.begin(); it != set.end(); ++it) {
         if (it->valid && it->tag == tag && it->state != Constants::I_State) {
-            // On a cache hit, move the cache line to the front (LRU policy)
             set.erase(it);
             return;
         }
@@ -63,7 +62,7 @@ void Cache::addLine(int address, CacheLine cache_line, Bus *bus) {
     auto& set = sets[blockIndex];
     if (set.size() >= associativity) {
         // If the set is full, remove the least recently used (LRU) cache line
-        if (set.back().state == Constants::M_State) {
+        if (set.back().state == Constants::M_State || set.back().state == Constants::Sm_State) {
             bus->putOnBus(BusTransaction::WriteBackTransaction());
         }
         set.pop_back();
@@ -96,13 +95,18 @@ Constants::MESI_States Cache::getNewState(Constants::MESI_States oldState, bool 
             return Constants::S_State;
         }
         else {
-        return Constants::E_State;
+            return Constants::E_State;
         }
     }
     else if (!isRead && oldState == Constants::I_State) {
         return Constants::M_State;
     }
     return Constants::NO_State;
+}
+
+
+bool Cache::checkOthers(int address) {
+    return cacheWire->checkAllOthers(address, this);
 }
 
 bool Cache::cacheContains(int address) {
