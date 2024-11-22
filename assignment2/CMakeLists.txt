@@ -21,4 +21,5 @@ add_executable(CS4223AAAA
         classes/BusTransaction.h
         classes/BusTransaction.cpp
         classes/Bus.cpp
-        classes/CPU.cpp)
+        classes/CPU.cpp
+        classes/cacheWires.cpp)
