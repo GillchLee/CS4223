@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
     for (int i = 0; i < 4; ++i) {
         // put filenaems to filenames[0~3]
         std::string filename = generateFileName(i);
-        filename = "D:/Clion/CS4223AAAA/assignment2/data/blackscholes_" + std::to_string(i) + ".data";
+        filename = "D:/Clion/CS4223AAAA/assignment2/bodytrack_four/bodytrack_" + std::to_string(i) + ".data";
         filenames.push_back(filename);
         std::cout << "Generated filename: " << filename << std::endl;
 
@@ -102,7 +102,7 @@ int main(int argc, char *argv[]) {
 
     // for multicore cycles
 
-    unsigned long long total_cycles = -1;
+    unsigned long long max_cycles = -1;
     bool Readfile_available = true;
     bool flag1 = false;
     bool flag2 = false;
@@ -125,15 +125,15 @@ int main(int argc, char *argv[]) {
         result4 = readLabelAndData(line4);
     }
 
-
     if (PROTOCOL == "MESI"){
         while (Readfile_available) {
             Readfile_available = false;
-            total_cycles++;
+            max_cycles++;
             bus.execute(&dram);
             if (flag1) {
                 cpu1.snoop();
-                if (!cpu1.Execute(result1.first, result1.second)) {
+                bool flag = cpu1.Execute(result1.first, result1.second);
+                if (!flag) {
                     if (std::getline(files[0], line1)) {
                         flag1 = true;
                     } else {
@@ -187,12 +187,13 @@ int main(int argc, char *argv[]) {
         cpu4.PrintStats();
         std::cout << "Invalidation count: " << bus.invalidationsCnt << std::endl;
         std::cout << "Amount of data traffic : " << bus.busTraffic << std::endl;
+        std::cout << "Total cycles: " << max_cycles << std::endl;
         return 0;
     }
     else {
         while (Readfile_available) {
             Readfile_available = false;
-            total_cycles++;
+            max_cycles++;
             bus.execute(&dram);
             if (flag1) {
                 cpu1.snoopDragon();
@@ -250,6 +251,7 @@ int main(int argc, char *argv[]) {
         cpu4.PrintStats();
         std::cout << "Invalidation count: " << bus.invalidationsCnt << std::endl;
         std::cout << "Amount of data traffic : " << bus.busTraffic << std::endl;
+        std::cout << "Total cycles: " << max_cycles << std::endl;
         return 0;
     }
 }

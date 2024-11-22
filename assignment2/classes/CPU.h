@@ -20,9 +20,9 @@ private:
     bool readRequestSent = false;
 
 
-    int label;
+    int label = -1;
     unsigned int data;
-    int target_cycles;
+    int target_cycles = 0;
 
 
     // benchmark factors

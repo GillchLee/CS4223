@@ -22,11 +22,11 @@ void CPU::snoop() {
         return;
     }
     if (bt->type == BusTransaction::Invalidate) {
-        bus->invalidationsCnt++;
+        // bus->invalidationsCnt++;
         cache->removeLine(bt->address);
     }
     if (bt->type == BusTransaction::ReadExclusive) {
-        bus->invalidationsCnt++;
+        // bus->invalidationsCnt++;
         if (state == Constants::E_State) {
             bt->isValid = false;
             bus->putOnBus(BusTransaction::ReadResponseTransaction(bt->address));
@@ -52,6 +52,7 @@ void CPU::snoop() {
 
 
 bool CPU::Execute(const int input_label, const int input_data) {
+    total_cycles++;
     // access cache, dram. and compute
     if (!on_process) {
         // if there's no instruction in CPU, insert label and data to CPU
@@ -60,22 +61,20 @@ bool CPU::Execute(const int input_label, const int input_data) {
         data = input_data;
         target_cycles = data;
 
-        if (label == 0 || label == 1) num_ls++; // for counting # of load/store
-        total_instructions++;
         on_process = true;
-        cycles = 0;
+        cycles = 1;
         if (label == 0 || label == 1) {
+            total_instructions++;
+            num_ls++;
             state = cache->getState(input_data);
-            total_cycles++;
             return true; // causes it to stall 1 cycle for cache penalty
         }
     }
     if (label == 2) {
         // start computing and hold cycles for "data time". if input_data is 0xc, wait for 12 cycles to compute.
         if (target_cycles == cycles) {
-            total_instructions += cycles - 1;
+            total_instructions += cycles;
             compute_cycles += cycles;
-            total_cycles--; // value was off by 1
             resetState();
         } else {
             cycles++;
@@ -143,12 +142,13 @@ bool CPU::Execute(const int input_label, const int input_data) {
         } else if (state == Constants::E_State) {
             cache_hit++;
             nonSharedData++;
-            CacheLine *cl = cache->getLine(input_data);
-            cl->state = Constants::M_State;
+            if (cache->getState(input_data) != Constants::I_State) {
+                CacheLine *cl = cache->getLine(input_data);
+                cl->state = Constants::M_State;
+            }
             resetState();
         }
     }
-    total_cycles++;
     return on_process;
 }
 
@@ -160,6 +160,7 @@ void CPU::resetState() {
 }
 
 bool CPU::ExecuteDragon(int input_label, int input_data) {
+    total_cycles++;
     // access cache, dram. and compute
     if (!on_process) {
         // if there's no instruction in CPU, insert label and data to CPU
@@ -175,7 +176,6 @@ bool CPU::ExecuteDragon(int input_label, int input_data) {
         if (label == 0 || label == 1) {
             //TODO:fix this/update getState or create new getState, remember this updates the order of the cache(LRU)
             state = cache->getState(input_data);
-            total_cycles++;
             return true; // causes it to stall 1 cycle for cache penalty
         }
     }
@@ -184,7 +184,6 @@ bool CPU::ExecuteDragon(int input_label, int input_data) {
         if (target_cycles == cycles) {
             total_instructions += cycles - 1;
             compute_cycles += cycles;
-            total_cycles--; // value was off by 1
             resetState();
         } else {
             cycles++;
@@ -277,7 +276,6 @@ bool CPU::ExecuteDragon(int input_label, int input_data) {
             resetState();
         }
     }
-    total_cycles++;
     return on_process;
 }
 

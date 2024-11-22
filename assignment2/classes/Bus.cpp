@@ -1,8 +1,16 @@
 #include "Bus.h"
 
+#include <cassert>
+
 void Bus::execute(DRAM *dram) {
     if (currentTransaction != nullptr) {
-        busTraffic++;
+        if (currentTransaction->type != BusTransaction::Invalidate) {
+            busTraffic++;
+        }
+        if (currentTransaction->type == BusTransaction::Invalidate || currentTransaction->type ==
+                   BusTransaction::ReadExclusive) {
+            invalidationsCnt++;
+        }
         if (currentTransaction->size <= 1) {
             if (currentTransaction->type == BusTransaction::ReadShared || currentTransaction->type ==
                 BusTransaction::ReadExclusive || currentTransaction->type == BusTransaction::WriteBack) {
