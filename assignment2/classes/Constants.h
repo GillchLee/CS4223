@@ -7,12 +7,13 @@
     static int CACHE_ASSOC = 2;
     static int CACHE_BLOCK_SIZE = 32;
     static std::string FILE_NAME = "blackscholes_";
-    static std::string PROTOCOL = "MESI";
+    static std::string PROTOCOL = "DRAGON";
     static int WORD_SIZE = 4;
 
 class Constants {
 public:
     enum MESI_States {
+        FAKE_STATE,
         M_State,
         E_State,
         S_State,

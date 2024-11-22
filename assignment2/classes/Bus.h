@@ -12,7 +12,7 @@ class Bus {
 std::queue<BusTransaction*> queue;
 public:
     int busTraffic = 0;
-    int invalidationsCnt;
+    int invalidationsCnt = 0;
     BusTransaction *currentTransaction = nullptr;
 
     void execute(DRAM *dram);

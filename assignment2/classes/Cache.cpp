@@ -102,13 +102,13 @@ Constants::MESI_States Cache::getNewState(Constants::MESI_States oldState, bool 
 }
 
 Constants::MESI_States Cache::getNewDragonState(Constants::MESI_States oldState, bool isRead, int address) {
-    if (isRead && oldState == Constants::I_State && cacheWire->checkAllCaches(address)) {
+    if (isRead && oldState == Constants::I_State && checkOthers(address)) {
         return Constants::Sc_State;
-    } else if (isRead && oldState == Constants::I_State && !cacheWire->checkAllCaches(address)) {
+    } else if (isRead && oldState == Constants::I_State && !checkOthers(address)) {
         return Constants::E_State;
-    } else if (!isRead && oldState == Constants::I_State && cacheWire->checkAllCaches(address)) {
+    } else if (!isRead && oldState == Constants::I_State && checkOthers(address)) {
         return Constants::Sm_State;
-    } else if (isRead && oldState == Constants::I_State && !cacheWire->checkAllCaches(address)) {
+    } else if (!isRead && oldState == Constants::I_State && !checkOthers(address)) {
         return Constants::M_State;
     }
 }

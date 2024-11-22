@@ -281,3 +281,8 @@ bool CPU::ExecuteDragon(int input_label, int input_data) {
     total_cycles++;
     return on_process;
 }
+
+void CPU::snoopDragon() {
+    return;
+}
+

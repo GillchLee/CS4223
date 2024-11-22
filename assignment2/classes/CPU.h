@@ -4,19 +4,18 @@
 #include <iomanip>
 #include <iostream>
 
-#include "Bus.h"
 #include "Cache.h"
 #include "DRAM.h"
 
 class CPU {
 private:
-    int blockSize;      // Size of each cache block in bytes
-    int id;           // CPU ID
-    Cache* cache;      // Private cache
-    Bus* bus;          // Shared bus
-    DRAM* dram;        // Shared DRAM
-    int cycles = 0;        // Cycle counter
-    bool on_process = false;    // if CPU is working or not
+    int blockSize; // Size of each cache block in bytes
+    int id; // CPU ID
+    Cache *cache; // Private cache
+    Bus *bus; // Shared bus
+    DRAM *dram; // Shared DRAM
+    int cycles = 0; // Cycle counter
+    bool on_process = false; // if CPU is working or not
     Constants::MESI_States state = Constants::NO_State;
     bool readRequestSent = false;
 
@@ -26,25 +25,29 @@ private:
     int target_cycles;
 
 
-
     // benchmark factors
-    unsigned int total_instructions; // for computing IPC
-    unsigned long total_cycles;  // idle cycles + target cycles
-    unsigned int num_ls;        // # of load/store
-    unsigned long compute_cycles; // # of total compute cycles
-    unsigned long cache_hit;
-    unsigned long cache_miss;
-    unsigned long idleCycles= 0;
-    unsigned long dataTraffic=0;
-    unsigned long sharedData=0;
-    unsigned long nonSharedData=0;
+    unsigned int total_instructions = 0; // for computing IPC
+    unsigned long total_cycles = 0; // idle cycles + target cycles
+    unsigned int num_ls = 0; // # of load/store
+    unsigned long compute_cycles = 0; // # of total compute cycles
+    unsigned long cache_hit = 0;
+    unsigned long cache_miss = 0;
+    unsigned long idleCycles = 0;
+    unsigned long dataTraffic = 0;
+    unsigned long sharedData = 0;
+    unsigned long nonSharedData = 0;
+
 public:
-    CPU(int blockSize,int id, Cache* cache, Bus* bus, DRAM* dram, int cycles, bool on_process, int label, unsigned int data,
-    int target_cycles,
-    unsigned int total_instructions, long total_cycles, unsigned int num_ls,unsigned long compute_cycles, unsigned long cache_hit, unsigned long cache_miss)
-        : blockSize(blockSize), id(id), cache(cache), bus(bus), dram(dram), cycles(0), on_process(false),label(-1), data(0),
-        target_cycles(100),
-        total_instructions(0), total_cycles(0), num_ls(0), compute_cycles(0), cache_hit(0),cache_miss(0) {}
+    CPU(int blockSize, int id, Cache *cache, Bus *bus, DRAM *dram, int cycles, bool on_process, int label,
+        unsigned int data,
+        int target_cycles,
+        unsigned int total_instructions, long total_cycles, unsigned int num_ls, unsigned long compute_cycles,
+        unsigned long cache_hit, unsigned long cache_miss)
+        : blockSize(blockSize), id(id), cache(cache), bus(bus), dram(dram), cycles(0), on_process(false), label(-1),
+          data(0),
+          target_cycles(100),
+          total_instructions(0), total_cycles(0), num_ls(0), compute_cycles(0), cache_hit(0), cache_miss(0) {
+    }
 
     // Function to read operations from a file
     bool Execute(int input_label, int input_data);
@@ -65,11 +68,13 @@ public:
         std::cout << "Distribution of accesses to private data : " << IPC << std::endl;
         std::cout << "Shared data : " << sharedData << std::endl;
         std::cout << "exclusive data : " << nonSharedData << std::endl;
-        std::cout <<"\n-----------------------------------------------------------------------------------" << std::endl;
-
+        std::cout << "\n-----------------------------------------------------------------------------------" <<
+                std::endl;
     }
 
     bool ExecuteDragon(int input_label, int input_data);
+
+    void snoopDragon();
 };
 
 #endif //CPU_H
