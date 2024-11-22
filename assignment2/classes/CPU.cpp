@@ -205,7 +205,7 @@ bool CPU::ExecuteDragon(int input_label, int input_data) {
                                                      cache->getNewDragonState(Constants::I_State, true, input_data)),
                                bus);
                 resetState();
-                }
+            }
         } else if (state == Constants::E_State) {
             cache_hit++;
             nonSharedData++;
@@ -242,7 +242,7 @@ bool CPU::ExecuteDragon(int input_label, int input_data) {
                     bus->putOnBus(BusTransaction::BusUpdateTransaction(input_data));
                 }
                 resetState();
-                }
+            }
         } else if (state == Constants::E_State) {
             cache_hit++;
             nonSharedData++;
@@ -270,8 +270,7 @@ bool CPU::ExecuteDragon(int input_label, int input_data) {
                 CacheLine *cl = cache->getLine(input_data);
                 cl->state = Constants::Sm_State;
                 bus->putOnBus(BusTransaction::BusUpdateTransaction(input_data));
-            }
-            else {
+            } else {
                 CacheLine *cl = cache->getLine(input_data);
                 cl->state = Constants::M_State;
             }
@@ -283,6 +282,32 @@ bool CPU::ExecuteDragon(int input_label, int input_data) {
 }
 
 void CPU::snoopDragon() {
-    return;
+    if (!bus->currentTransaction || (bus->currentTransaction->type != BusTransaction::ReadShared && bus->
+                                     currentTransaction->type != BusTransaction::Update)) {
+        return;
+    }
+    BusTransaction *bt = bus->currentTransaction;
+    if (!cache->cacheContains(bt->address)) {
+        return;
+    }
+    CacheLine *cl = cache->getLine(bt->address);
+    Constants::MESI_States state = cl->state;
+    if (bt->type == BusTransaction::ReadShared) {
+        if (state == Constants::E_State) {
+            bt->isValid = false;
+            bus->putOnBus(BusTransaction::ReadResponseTransaction(bt->address));
+            cl->state = Constants::Sc_State;
+        } else if (state == Constants::M_State) {
+            bt->isValid = false;
+            bus->putOnBus(BusTransaction::ReadResponseTransaction(bt->address));
+            cl->state = Constants::Sm_State;
+        } else if (state == Constants::Sm_State) {
+            bt->isValid = false;
+            bus->putOnBus(BusTransaction::ReadResponseTransaction(bt->address));
+        }
+    } else if (bt->type == BusTransaction::Update) {
+        if (state == Constants::Sm_State) {
+            cl->state = Constants::Sc_State;
+        }
+    }
 }
-
