@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
     for (int i = 0; i < 4; ++i) {
         // put filenaems to filenames[0~3]
         std::string filename = generateFileName(i);
-        filename = "D:/Clion/CS4223AAAA/assignment2/bodytrack_four/bodytrack_" + std::to_string(i) + ".data";
+        // filename = "D:/Clion/CS4223AAAA/assignment2/bodytrack_four/bodytrack_" + std::to_string(i) + ".data";
         filenames.push_back(filename);
         std::cout << "Generated filename: " << filename << std::endl;
 
