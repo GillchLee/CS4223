@@ -1,3 +1,2 @@
-READ ppt 
-add what we have to do
-add what you did
+Cache simulator for multicore architecture
+refer 'Make file'
